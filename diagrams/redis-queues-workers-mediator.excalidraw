@@ -749,11 +749,24 @@
       "index": "b31",
       "roundness": null,
       "seed": 1210923528,
-      "version": 428,
-      "versionNonce": 293658120,
+      "version": 432,
+      "versionNonce": 2100604760,
       "isDeleted": false,
-      "boundElements": [],
-      "updated": 1793596127896,
+      "boundElements": [
+        {
+          "id": "g6hOeE3ZuwNLooUMQLNKw",
+          "type": "arrow"
+        },
+        {
+          "id": "61MNu1WoVKKZauF4Rkwqe",
+          "type": "arrow"
+        },
+        {
+          "id": "3m7jrA14cWOHVxvvF9vlr",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1793814059852,
       "link": null,
       "locked": false,
       "text": "Processing messages stream:",
@@ -1512,11 +1525,20 @@
       "index": "b31x",
       "roundness": null,
       "seed": 1061521528,
-      "version": 496,
-      "versionNonce": 1450101368,
+      "version": 498,
+      "versionNonce": 1702612824,
       "isDeleted": false,
-      "boundElements": [],
-      "updated": 1793596206839,
+      "boundElements": [
+        {
+          "id": "61MNu1WoVKKZauF4Rkwqe",
+          "type": "arrow"
+        },
+        {
+          "id": "5z7l_zNXzaQ2Evog2qfrq",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1793814072780,
       "link": null,
       "locked": false,
       "text": "Insert messages stream:",
@@ -1938,11 +1960,20 @@
       "index": "b3B",
       "roundness": null,
       "seed": 1419341320,
-      "version": 66,
-      "versionNonce": 895159672,
+      "version": 69,
+      "versionNonce": 1231333160,
       "isDeleted": false,
-      "boundElements": [],
-      "updated": 1793596165317,
+      "boundElements": [
+        {
+          "id": "L3gZorPRvtLTfiZzg6tCV",
+          "type": "arrow"
+        },
+        {
+          "id": "A7jO_ljtdqxQrJo08QiVy",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1793814078836,
       "link": null,
       "locked": false,
       "text": "Failed processing messages ids:",
@@ -2364,11 +2395,20 @@
       "index": "b3L",
       "roundness": null,
       "seed": 1936276856,
-      "version": 125,
-      "versionNonce": 1585091704,
+      "version": 127,
+      "versionNonce": 272354136,
       "isDeleted": false,
-      "boundElements": [],
-      "updated": 1793596217203,
+      "boundElements": [
+        {
+          "id": "-GBLQUMDDIDr4wosUZwk3",
+          "type": "arrow"
+        },
+        {
+          "id": "iHevWzBv8-q0o7t8BBrPH",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1793814082236,
       "link": null,
       "locked": false,
       "text": "Failed insert messages ids:",
@@ -2404,11 +2444,20 @@
       "index": "b3R",
       "roundness": null,
       "seed": 759553912,
-      "version": 229,
-      "versionNonce": 540582008,
+      "version": 231,
+      "versionNonce": 596655144,
       "isDeleted": false,
-      "boundElements": [],
-      "updated": 1793596424478,
+      "boundElements": [
+        {
+          "id": "krldP69tAw70sZpU6JLht",
+          "type": "arrow"
+        },
+        {
+          "id": "5z7l_zNXzaQ2Evog2qfrq",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1793814064877,
       "link": null,
       "locked": false,
       "text": "Job context:",
@@ -2522,11 +2571,16 @@
       "index": "b3U",
       "roundness": null,
       "seed": 1722892296,
-      "version": 294,
-      "versionNonce": 1162684424,
+      "version": 295,
+      "versionNonce": 199404584,
       "isDeleted": false,
-      "boundElements": [],
-      "updated": 1793596437663,
+      "boundElements": [
+        {
+          "id": "5b7lO5tCjdDZajYPxW-Jy",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1793809579489,
       "link": null,
       "locked": false,
       "text": "Last persisted message:",
@@ -2710,16 +2764,32 @@
         "type": 3
       },
       "seed": 1063806216,
-      "version": 103,
-      "versionNonce": 1478146424,
+      "version": 109,
+      "versionNonce": 661941288,
       "isDeleted": false,
       "boundElements": [
         {
           "type": "text",
           "id": "EVRbM6W4ONv9zYXbexuIZ"
+        },
+        {
+          "id": "eynfYCR1ENV8AAHXCcEq2",
+          "type": "arrow"
+        },
+        {
+          "id": "ZNRn721dpWH3kqqJ7xMme",
+          "type": "arrow"
+        },
+        {
+          "id": "3m7jrA14cWOHVxvvF9vlr",
+          "type": "arrow"
+        },
+        {
+          "id": "A7jO_ljtdqxQrJo08QiVy",
+          "type": "arrow"
         }
       ],
-      "updated": 1793596625200,
+      "updated": 1793814078836,
       "link": null,
       "locked": false
     },
@@ -2782,16 +2852,56 @@
         "type": 3
       },
       "seed": 694708344,
-      "version": 214,
-      "versionNonce": 1190476408,
+      "version": 224,
+      "versionNonce": 1568528472,
       "isDeleted": false,
       "boundElements": [
         {
           "id": "wetfAd34T6Ow77PuS_pmO",
           "type": "text"
+        },
+        {
+          "id": "g6hOeE3ZuwNLooUMQLNKw",
+          "type": "arrow"
+        },
+        {
+          "id": "krldP69tAw70sZpU6JLht",
+          "type": "arrow"
+        },
+        {
+          "id": "5b7lO5tCjdDZajYPxW-Jy",
+          "type": "arrow"
+        },
+        {
+          "id": "L3gZorPRvtLTfiZzg6tCV",
+          "type": "arrow"
+        },
+        {
+          "id": "61MNu1WoVKKZauF4Rkwqe",
+          "type": "arrow"
+        },
+        {
+          "id": "-GBLQUMDDIDr4wosUZwk3",
+          "type": "arrow"
+        },
+        {
+          "id": "eynfYCR1ENV8AAHXCcEq2",
+          "type": "arrow"
+        },
+        {
+          "id": "ZNRn721dpWH3kqqJ7xMme",
+          "type": "arrow"
+        },
+        {
+          "id": "sppVmNYRmoGXOl7iD8zkv",
+          "type": "arrow"
+        },
+        {
+          "id": "xrGJHn7U3BYsDQ81U3P7n",
+          "type": "arrow"
         }
       ],
-      "updated": 1793596630364,
+      "updated": 1793813738044,
       "link": null,
       "locked": false
     },
@@ -2854,16 +2964,32 @@
         "type": 3
       },
       "seed": 815407224,
-      "version": 248,
-      "versionNonce": 1837598328,
+      "version": 252,
+      "versionNonce": 1058136104,
       "isDeleted": false,
       "boundElements": [
         {
           "id": "xaqjYrItEWnRioBSSgFq9",
           "type": "text"
+        },
+        {
+          "id": "sppVmNYRmoGXOl7iD8zkv",
+          "type": "arrow"
+        },
+        {
+          "id": "xrGJHn7U3BYsDQ81U3P7n",
+          "type": "arrow"
+        },
+        {
+          "id": "5z7l_zNXzaQ2Evog2qfrq",
+          "type": "arrow"
+        },
+        {
+          "id": "iHevWzBv8-q0o7t8BBrPH",
+          "type": "arrow"
         }
       ],
-      "updated": 1793596621191,
+      "updated": 1793814086572,
       "link": null,
       "locked": false
     },
@@ -2907,10 +3033,10 @@
     {
       "id": "fQb8MFaaei6VxKW-PMbjh",
       "type": "text",
-      "x": -4339.336929319295,
-      "y": 5612.861806607912,
+      "x": -4334.753595985962,
+      "y": 5867.528473274579,
       "width": 2171.7783203125,
-      "height": 2350,
+      "height": 2500,
       "angle": 0,
       "strokeColor": "#1e1e1e",
       "backgroundColor": "transparent",
@@ -2924,20 +3050,1388 @@
       "index": "b3d",
       "roundness": null,
       "seed": 1578967690,
-      "version": 6192,
-      "versionNonce": 44132840,
+      "version": 6805,
+      "versionNonce": 1214437976,
       "isDeleted": false,
       "boundElements": [],
-      "updated": 1793655859880,
+      "updated": 1793817739441,
       "link": null,
       "locked": false,
-      "text": "# Mediator\n\n## Queue(messages, messagesTotalCount, context, callbacks):\n- var processedMessagesCount := insertedMessagesCount := 0, processingStreamIsDone := False\n- lastPersistedContext := get last persisted job context from Redis\n- If there is lastPersistedContext:\n    - processingStreamInfo := get processing stream info from Redis\n    - processedMessagesCount := messagesTotalCount - processingStreamInfo.pending - processingStreamInfo.lag\n    - insertStreamInfo := get insert stream info from Redis\n    - insertedMessagesCount := messagesTotalCount - insertStreamInfo.pending - insertStreamInfo.lag\n    - processingStreamIsDone := processingStreamInfo.length = messagesTotalCount\n    - Read the ids of the PEL of the processing messages stream and assign them to the failed processing messages ids list in one atomic operation\n- Else:\n    - clear both the processing messages stream and the insert messages stream as well as their respective failed messages ids lists, the last job context and the last persisted message from Redis in one atomic operation\n    - persist the current job context var `context` in Redis\n- callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n- callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n- If not processingStreamIsDone:\n    - shouldSkipMessage := True\n    - lastPersistedMessage := get last persisted message from Redis\n    - For each message in messages:\n        - If message is lastPersistedMessage:\n            - shouldSkipMessage := False\n            - continue\n        - If shouldSkipMessage: continue\n        - Queue the message to the stream\n        - Update the last persisted message in Redis\n- shouldDoJob := True\n- While shouldDoJob:\n    - Initialize the processing workers\n        - payload:\n            - context\n            - worker index\n            - worker type\n            - consumer group\n            - stream\n            - batch size\n            - xread delay\n            - max retries\n        - send initial message to each worker with the payload\n        - listen to events from each worker:\n            - processing finished (batch):\n                - processedMessagesCount := processedMessagesCount + batch.length\n                - processingProgressPercent := processedMessagesCount / messagesTotalCount\n                - callbacks.onProcessingFinished(batch)\n                - callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n            - processing terminated:\n                - kill worker\n            - insert finished (batch):\n                - insertedMessagesCount := insertedMessagesCount + batch.length\n                - insertProgressPercent := insertedMessagesCount / messagesTotalCount\n                - callbacks.onInsertFinished(batch)\n                - callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n            - insert terminated:\n                - mark worker as done\n                - kill worker\n    - Wait until all workers are done\n    - hasPendingMessages := processing messages stream or insert messages stream in Redis still have pending messages\n    - If hasPendingMessages:\n        - shouldDoJob := Prompt user whether or not he wants to retry working on the pending messages\n    - Else:\n        - shouldDoJob := False\n        - Clear job context, processing messages stream, failed processing messages ids, insert messages stream, failed insert messages ids, last persisted message, in one single atomic operation\n        \n# Executor\n\n## Run(payload, callback, lifecycleHooks):\n- lifecycleHooks.onInit(payload.workerType, payload.workerIndex, payload.context)\n- failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- While failedMessagesIds is not empty:\n    - batch := claim the first payload.batchSize messages ids from the payload.workerType's messages stream PEL\n    - callback(batch, payload.workerType, payload.workerIndex, payload.context)\n    - If no error:\n        - Ack the batch in Redis stream\n    - failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- messagesStreamInfo := fetch the info of the payload.workerType's messages stream\n- allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n- allMessagesHaveBeenAcked := (payload.messagesTotalCount - messagesStreamInfo.lag - messagesStreamInfo.pending) = 0\n- While not allMessagesHaveBeenStreamed or not allMessagesHaveBeenAcked:\n    - batch := read the next payload.batchSize messages from the payload.workerType's messages stream lag\n    - retriesCount := 0\n    - While retriesCount <= payload.maxRetries:\n        - callback(batch, payload.workerType, payload.workerIndex, payload.context, retriesCount)\n        - If error:\n            - retriesCount := retriesCount + 1\n        - Else:\n            - Ack the batch in Redis Stream\n            - Emit a processing finished event or insert finished event (depending on payload.workerType) back to the main program alongside the batch\n            - break\n    - messagesStreamInfo := fetch the info of the payload.workerType's messages stream\n    - allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n    - allMessagesHaveBeenAcked := (payload.messagesTotalCount - messagesStreamInfo.lag - messagesStreamInfo.pending) = 0\n- Emit a processing terminated event or insert terminated event (depending on payload.workerType) back to the main program\n- lifecycleHooks.onTeardown(payload.workerType, payload.workerIndex, payload.context)",
+      "text": "# Mediator\n\n## Queue(messages, messagesTotalCount, context, callbacks):\n- var processedMessagesCount := insertedMessagesCount := 0, processingStreamIsDone := False\n- lastPersistedContext := get last persisted job context from Redis\n- If there is lastPersistedContext:\n    - processingStreamInfo := get processing stream PEL info from Redis\n    - processingStreamLength := get length of processing stream from Redis\n    - processedMessagesCount := messagesTotalCount - processingStreamInfo.pending - processingStreamInfo.lag\n    - insertStreamInfo := get insert stream info PEL from Redis\n    - insertedMessagesCount := messagesTotalCount - insertStreamInfo.pending - insertStreamInfo.lag\n    - processingStreamIsDone := processingStreamLength = messagesTotalCount\n    - Read the ids of the PEL of the processing messages stream and assign them (not append) to the failed processing messages ids list in one atomic operation\n- Else:\n    - clear both the processing messages stream and the insert messages stream as well as their respective failed messages ids lists, the last job context and the last persisted message from Redis in one atomic operation\n    - persist the current job context var `context` in Redis\n- callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n- callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n- If not processingStreamIsDone:\n    - shouldSkipMessage := True\n    - lastPersistedMessage := get last persisted message from Redis\n    - For each message in messages:\n        - If message is lastPersistedMessage:\n            - shouldSkipMessage := False\n            - continue\n        - If shouldSkipMessage: continue\n        - Queue the message to the stream\n        - Update the last persisted message in Redis\n- shouldDoJob := True\n- While shouldDoJob:\n    - Initialize the workers\n        - payload:\n            - context\n            - worker index\n            - worker type\n            - consumer group\n            - stream\n            - batch size\n            - xread delay\n            - max retries\n        - send initial message to each worker with the payload\n        - listen to events from each worker:\n            - processing finished (batch):\n                - processedMessagesCount := processedMessagesCount + batch.length\n                - processingProgressPercent := processedMessagesCount / messagesTotalCount\n                - callbacks.onProcessingFinished(batch)\n                - callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n            - processing terminated:\n                - kill worker\n            - processing log (lines):\n                - callbacks.onProcessingLog(lines)\n            - insert finished (batch):\n                - insertedMessagesCount := insertedMessagesCount + batch.length\n                - insertProgressPercent := insertedMessagesCount / messagesTotalCount\n                - callbacks.onInsertFinished(batch)\n                - callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n            - insert terminated:\n                - mark worker as done\n                - kill worker\n            - insert log (lines):\n                - callbacks.onInsertLog(lines)\n    - Wait until all workers are done\n    - hasPendingMessages := processing messages stream or insert messages stream in Redis still have pending messages\n    - If hasPendingMessages:\n        - shouldDoJob := Prompt user whether or not he wants to retry working on the pending messages\n    - Else:\n        - shouldDoJob := False\n        - Clear job context, processing messages stream, failed processing messages ids, insert messages stream, failed insert messages ids, last persisted message, in one single atomic operation\n        \n# Executor\n\n## Run(payload, callback, lifecycleHooks, logger):\n- lifecycleHooks.onInit(payload.workerType, payload.workerIndex, payload.context, logger)\n- failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- While failedMessagesIds is not empty:\n    - batch := claim the first payload.batchSize messages ids from the payload.workerType's messages stream PEL\n    - callback(batch, payload.workerType, payload.workerIndex, payload.context)\n    - If no error:\n        - Ack the batch in Redis stream\n    - failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- messagesStreamInfo := fetch the PEL info of the payload.workerType's messages stream\n- allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n- allMessagesHaveBeenRead := messagesStreamInfo.lag = 0\n- While not allMessagesHaveBeenStreamed or not allMessagesHaveBeenRead:\n    - batch := read the next payload.batchSize messages from the payload.workerType's messages stream lag\n    - retriesCount := 0\n    - While retriesCount <= payload.maxRetries:\n        - callback(batch, payload.workerType, payload.workerIndex, payload.context, retriesCount, logger)\n        - If error:\n            - retriesCount := retriesCount + 1\n        - Else:\n            - Ack the batch in Redis Stream\n            - Emit a finished event or insert finished event (depending on payload.workerType) back to the main program alongside the batch\n            - Break\n    - messagesStreamInfo := fetch the PEL info of the payload.workerType's messages stream\n    - messagesStreamLength := fetch the length of the payload.workerType's messages stream\n    - allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n    - allMessagesHaveBeenRead := messagesStreamInfo.lag = 0\n- Emit a terminated event or insert terminated event (depending on payload.workerType) back to the main program\n- lifecycleHooks.onTeardown(payload.workerType, payload.workerIndex, payload.context, logger)",
       "fontSize": 20,
       "fontFamily": 5,
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "# Mediator\n\n## Queue(messages, messagesTotalCount, context, callbacks):\n- var processedMessagesCount := insertedMessagesCount := 0, processingStreamIsDone := False\n- lastPersistedContext := get last persisted job context from Redis\n- If there is lastPersistedContext:\n    - processingStreamInfo := get processing stream info from Redis\n    - processedMessagesCount := messagesTotalCount - processingStreamInfo.pending - processingStreamInfo.lag\n    - insertStreamInfo := get insert stream info from Redis\n    - insertedMessagesCount := messagesTotalCount - insertStreamInfo.pending - insertStreamInfo.lag\n    - processingStreamIsDone := processingStreamInfo.length = messagesTotalCount\n    - Read the ids of the PEL of the processing messages stream and assign them to the failed processing messages ids list in one atomic operation\n- Else:\n    - clear both the processing messages stream and the insert messages stream as well as their respective failed messages ids lists, the last job context and the last persisted message from Redis in one atomic operation\n    - persist the current job context var `context` in Redis\n- callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n- callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n- If not processingStreamIsDone:\n    - shouldSkipMessage := True\n    - lastPersistedMessage := get last persisted message from Redis\n    - For each message in messages:\n        - If message is lastPersistedMessage:\n            - shouldSkipMessage := False\n            - continue\n        - If shouldSkipMessage: continue\n        - Queue the message to the stream\n        - Update the last persisted message in Redis\n- shouldDoJob := True\n- While shouldDoJob:\n    - Initialize the processing workers\n        - payload:\n            - context\n            - worker index\n            - worker type\n            - consumer group\n            - stream\n            - batch size\n            - xread delay\n            - max retries\n        - send initial message to each worker with the payload\n        - listen to events from each worker:\n            - processing finished (batch):\n                - processedMessagesCount := processedMessagesCount + batch.length\n                - processingProgressPercent := processedMessagesCount / messagesTotalCount\n                - callbacks.onProcessingFinished(batch)\n                - callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n            - processing terminated:\n                - kill worker\n            - insert finished (batch):\n                - insertedMessagesCount := insertedMessagesCount + batch.length\n                - insertProgressPercent := insertedMessagesCount / messagesTotalCount\n                - callbacks.onInsertFinished(batch)\n                - callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n            - insert terminated:\n                - mark worker as done\n                - kill worker\n    - Wait until all workers are done\n    - hasPendingMessages := processing messages stream or insert messages stream in Redis still have pending messages\n    - If hasPendingMessages:\n        - shouldDoJob := Prompt user whether or not he wants to retry working on the pending messages\n    - Else:\n        - shouldDoJob := False\n        - Clear job context, processing messages stream, failed processing messages ids, insert messages stream, failed insert messages ids, last persisted message, in one single atomic operation\n        \n# Executor\n\n## Run(payload, callback, lifecycleHooks):\n- lifecycleHooks.onInit(payload.workerType, payload.workerIndex, payload.context)\n- failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- While failedMessagesIds is not empty:\n    - batch := claim the first payload.batchSize messages ids from the payload.workerType's messages stream PEL\n    - callback(batch, payload.workerType, payload.workerIndex, payload.context)\n    - If no error:\n        - Ack the batch in Redis stream\n    - failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- messagesStreamInfo := fetch the info of the payload.workerType's messages stream\n- allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n- allMessagesHaveBeenAcked := (payload.messagesTotalCount - messagesStreamInfo.lag - messagesStreamInfo.pending) = 0\n- While not allMessagesHaveBeenStreamed or not allMessagesHaveBeenAcked:\n    - batch := read the next payload.batchSize messages from the payload.workerType's messages stream lag\n    - retriesCount := 0\n    - While retriesCount <= payload.maxRetries:\n        - callback(batch, payload.workerType, payload.workerIndex, payload.context, retriesCount)\n        - If error:\n            - retriesCount := retriesCount + 1\n        - Else:\n            - Ack the batch in Redis Stream\n            - Emit a processing finished event or insert finished event (depending on payload.workerType) back to the main program alongside the batch\n            - break\n    - messagesStreamInfo := fetch the info of the payload.workerType's messages stream\n    - allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n    - allMessagesHaveBeenAcked := (payload.messagesTotalCount - messagesStreamInfo.lag - messagesStreamInfo.pending) = 0\n- Emit a processing terminated event or insert terminated event (depending on payload.workerType) back to the main program\n- lifecycleHooks.onTeardown(payload.workerType, payload.workerIndex, payload.context)",
+      "originalText": "# Mediator\n\n## Queue(messages, messagesTotalCount, context, callbacks):\n- var processedMessagesCount := insertedMessagesCount := 0, processingStreamIsDone := False\n- lastPersistedContext := get last persisted job context from Redis\n- If there is lastPersistedContext:\n    - processingStreamInfo := get processing stream PEL info from Redis\n    - processingStreamLength := get length of processing stream from Redis\n    - processedMessagesCount := messagesTotalCount - processingStreamInfo.pending - processingStreamInfo.lag\n    - insertStreamInfo := get insert stream info PEL from Redis\n    - insertedMessagesCount := messagesTotalCount - insertStreamInfo.pending - insertStreamInfo.lag\n    - processingStreamIsDone := processingStreamLength = messagesTotalCount\n    - Read the ids of the PEL of the processing messages stream and assign them (not append) to the failed processing messages ids list in one atomic operation\n- Else:\n    - clear both the processing messages stream and the insert messages stream as well as their respective failed messages ids lists, the last job context and the last persisted message from Redis in one atomic operation\n    - persist the current job context var `context` in Redis\n- callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n- callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n- If not processingStreamIsDone:\n    - shouldSkipMessage := True\n    - lastPersistedMessage := get last persisted message from Redis\n    - For each message in messages:\n        - If message is lastPersistedMessage:\n            - shouldSkipMessage := False\n            - continue\n        - If shouldSkipMessage: continue\n        - Queue the message to the stream\n        - Update the last persisted message in Redis\n- shouldDoJob := True\n- While shouldDoJob:\n    - Initialize the workers\n        - payload:\n            - context\n            - worker index\n            - worker type\n            - consumer group\n            - stream\n            - batch size\n            - xread delay\n            - max retries\n        - send initial message to each worker with the payload\n        - listen to events from each worker:\n            - processing finished (batch):\n                - processedMessagesCount := processedMessagesCount + batch.length\n                - processingProgressPercent := processedMessagesCount / messagesTotalCount\n                - callbacks.onProcessingFinished(batch)\n                - callbacks.onProcessingProgress(processedMessagesCount, messagesTotalCount, processingProgressPercent)\n            - processing terminated:\n                - kill worker\n            - processing log (lines):\n                - callbacks.onProcessingLog(lines)\n            - insert finished (batch):\n                - insertedMessagesCount := insertedMessagesCount + batch.length\n                - insertProgressPercent := insertedMessagesCount / messagesTotalCount\n                - callbacks.onInsertFinished(batch)\n                - callbacks.onInsertProgress(insertMessagesCount, messagesTotalCount, insertProgressPercent)\n            - insert terminated:\n                - mark worker as done\n                - kill worker\n            - insert log (lines):\n                - callbacks.onInsertLog(lines)\n    - Wait until all workers are done\n    - hasPendingMessages := processing messages stream or insert messages stream in Redis still have pending messages\n    - If hasPendingMessages:\n        - shouldDoJob := Prompt user whether or not he wants to retry working on the pending messages\n    - Else:\n        - shouldDoJob := False\n        - Clear job context, processing messages stream, failed processing messages ids, insert messages stream, failed insert messages ids, last persisted message, in one single atomic operation\n        \n# Executor\n\n## Run(payload, callback, lifecycleHooks, logger):\n- lifecycleHooks.onInit(payload.workerType, payload.workerIndex, payload.context, logger)\n- failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- While failedMessagesIds is not empty:\n    - batch := claim the first payload.batchSize messages ids from the payload.workerType's messages stream PEL\n    - callback(batch, payload.workerType, payload.workerIndex, payload.context)\n    - If no error:\n        - Ack the batch in Redis stream\n    - failedMessagesIds := pop payload.batchSize ids from the payload.workerType's failed messages ids\n- messagesStreamInfo := fetch the PEL info of the payload.workerType's messages stream\n- allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n- allMessagesHaveBeenRead := messagesStreamInfo.lag = 0\n- While not allMessagesHaveBeenStreamed or not allMessagesHaveBeenRead:\n    - batch := read the next payload.batchSize messages from the payload.workerType's messages stream lag\n    - retriesCount := 0\n    - While retriesCount <= payload.maxRetries:\n        - callback(batch, payload.workerType, payload.workerIndex, payload.context, retriesCount, logger)\n        - If error:\n            - retriesCount := retriesCount + 1\n        - Else:\n            - Ack the batch in Redis Stream\n            - Emit a finished event or insert finished event (depending on payload.workerType) back to the main program alongside the batch\n            - Break\n    - messagesStreamInfo := fetch the PEL info of the payload.workerType's messages stream\n    - messagesStreamLength := fetch the length of the payload.workerType's messages stream\n    - allMessagesHaveBeenStreamed := messagesStreamInfo.length < payload.messagesTotalCount\n    - allMessagesHaveBeenRead := messagesStreamInfo.lag = 0\n- Emit a terminated event or insert terminated event (depending on payload.workerType) back to the main program\n- lifecycleHooks.onTeardown(payload.workerType, payload.workerIndex, payload.context, logger)",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "g6hOeE3ZuwNLooUMQLNKw",
+      "type": "arrow",
+      "x": -4159.039310271667,
+      "y": 4734.754663750758,
+      "width": 1948.666666666667,
+      "height": 570,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3e",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1290066008,
+      "version": 185,
+      "versionNonce": 2085381976,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "BBAUbEMWTlwOvInzuC1Ss"
+        }
+      ],
+      "updated": 1793813876735,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1948.666666666667,
+          -570
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": 0.5151060491630434,
+        "gap": 2.952380952389831
+      },
+      "endBinding": {
+        "elementId": "M8YW8u_SIffCfrXAx2xyv",
+        "focus": 0.8833645365141166,
+        "gap": 10.677746000734714
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "BBAUbEMWTlwOvInzuC1Ss",
+      "type": "text",
+      "x": -3238.725958322611,
+      "y": 4399.754663750758,
+      "width": 108.03996276855469,
+      "height": 100,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3eV",
+      "roundness": null,
+      "seed": 2075806760,
+      "version": 31,
+      "versionNonce": 1061635112,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813872845,
+      "link": null,
+      "locked": false,
+      "text": "XPENDING\nXLEN\nDEL\nXADD",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "g6hOeE3ZuwNLooUMQLNKw",
+      "originalText": "XPENDING\nXLEN\nDEL\nXADD",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "61MNu1WoVKKZauF4Rkwqe",
+      "type": "arrow",
+      "x": -4156.539310271667,
+      "y": 4739.754663750758,
+      "width": 1931.166666666667,
+      "height": 90,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3fV",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 118169640,
+      "version": 252,
+      "versionNonce": 1981979688,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "pL8mjKyU6PRD3N_tSuCyI",
+          "type": "text"
+        }
+      ],
+      "updated": 1793813880059,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1931.166666666667,
+          -90
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": 0.24537315627191206,
+        "gap": 5.452380952389831
+      },
+      "endBinding": {
+        "elementId": "yHk0WN3OqpIO1tRoGgTpH",
+        "focus": 0.4511115461321213,
+        "gap": 14.587711515871433
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "pL8mjKyU6PRD3N_tSuCyI",
+      "type": "text",
+      "x": -3244.975958322611,
+      "y": 4644.754663750758,
+      "width": 108.03996276855469,
+      "height": 100,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3fl",
+      "roundness": null,
+      "seed": 450123352,
+      "version": 31,
+      "versionNonce": 1642647640,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813878859,
+      "link": null,
+      "locked": false,
+      "text": "XPENDING\nXLEN\nDEL\nXADD",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "61MNu1WoVKKZauF4Rkwqe",
+      "originalText": "XPENDING\nXLEN\nDEL\nXADD",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "krldP69tAw70sZpU6JLht",
+      "type": "arrow",
+      "x": -4160.896453128809,
+      "y": 4741.0641875602805,
+      "width": 1930,
+      "height": 400,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3g",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1718463576,
+      "version": 260,
+      "versionNonce": 1578787416,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "vG4TfSsMDDogV6n_4t_fu"
+        }
+      ],
+      "updated": 1793810376210,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          970.111111111124,
+          182.76190476190823
+        ],
+        [
+          1930,
+          400
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": -0.36472026651366063,
+        "gap": 1.0952380952476233
+      },
+      "endBinding": {
+        "elementId": "eQwefmrdEbmKp_O4nBlXz",
+        "focus": -0.46977832257813795,
+        "gap": 14
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "vG4TfSsMDDogV6n_4t_fu",
+      "type": "text",
+      "x": -3219.336447940821,
+      "y": 4903.5641875602805,
+      "width": 46.87998962402344,
+      "height": 75,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3h",
+      "roundness": null,
+      "seed": 554467416,
+      "version": 16,
+      "versionNonce": 620515368,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793810364259,
+      "link": null,
+      "locked": false,
+      "text": "GET\nSET\nDEL",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "krldP69tAw70sZpU6JLht",
+      "originalText": "GET\nSET\nDEL",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "5b7lO5tCjdDZajYPxW-Jy",
+      "type": "arrow",
+      "x": -4158.896453128809,
+      "y": 4747.0641875602805,
+      "width": 1940,
+      "height": 524,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3i",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1560806184,
+      "version": 94,
+      "versionNonce": 1553591128,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "EpinBInvm7fUfZqoFxDD3"
+        }
+      ],
+      "updated": 1793810379545,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          966.111111111124,
+          286.7619047619082
+        ],
+        [
+          1940,
+          524
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": -0.38885149369639566,
+        "gap": 3.0952380952476233
+      },
+      "endBinding": {
+        "elementId": "7MiuoYOVO8DYEPeAhcyUm",
+        "focus": -0.35670436631900326,
+        "gap": 2.4439212250355045
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "EpinBInvm7fUfZqoFxDD3",
+      "type": "text",
+      "x": -3212.336447940821,
+      "y": 4971.5641875602805,
+      "width": 46.87998962402344,
+      "height": 75,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3j",
+      "roundness": null,
+      "seed": 1849611352,
+      "version": 16,
+      "versionNonce": 419450456,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793810368102,
+      "link": null,
+      "locked": false,
+      "text": "GET\nSET\nDEL",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "5b7lO5tCjdDZajYPxW-Jy",
+      "originalText": "GET\nSET\nDEL",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "L3gZorPRvtLTfiZzg6tCV",
+      "type": "arrow",
+      "x": -4156.229786462141,
+      "y": 4737.230854226944,
+      "width": 1947.5,
+      "height": 282.5,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3k",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 323270696,
+      "version": 85,
+      "versionNonce": 23423576,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "0sq4qNXpdDpJGg07GwYYj"
+        }
+      ],
+      "updated": 1793809838873,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1947.5,
+          -282.5
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": 0.3887549246118986,
+        "gap": 5.761904761915503
+      },
+      "endBinding": {
+        "elementId": "sCq5greNl-DPyY4AYr8KY",
+        "focus": 0.6056172068769722,
+        "gap": 3.575203305209925
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "0sq4qNXpdDpJGg07GwYYj",
+      "type": "text",
+      "x": -3216.0697599118485,
+      "y": 4570.980854226944,
+      "width": 67.17994689941406,
+      "height": 50,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3l",
+      "roundness": null,
+      "seed": 2009640232,
+      "version": 12,
+      "versionNonce": 1053503784,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793809837011,
+      "link": null,
+      "locked": false,
+      "text": "DEL\nRPUSH",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "L3gZorPRvtLTfiZzg6tCV",
+      "originalText": "DEL\nRPUSH",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "-GBLQUMDDIDr4wosUZwk3",
+      "type": "arrow",
+      "x": -4153.729786462141,
+      "y": 4734.730854226944,
+      "width": 1932.5,
+      "height": 200,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3m",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1707818328,
+      "version": 172,
+      "versionNonce": 2032303960,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "uvqI1xSWK-6jPNHk38v2v",
+          "type": "text"
+        }
+      ],
+      "updated": 1793813591119,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          1932.5,
+          200
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": -0.3401393328024295,
+        "gap": 8.261904761915503
+      },
+      "endBinding": {
+        "elementId": "2HkCvHu5QgM7qdMP2ZnoY",
+        "focus": -0.41177296882039416,
+        "gap": 3.924796694790075
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "uvqI1xSWK-6jPNHk38v2v",
+      "type": "text",
+      "x": -3206.0697599118485,
+      "y": 4580.980854226944,
+      "width": 67.17994689941406,
+      "height": 50,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3n",
+      "roundness": null,
+      "seed": 496231464,
+      "version": 14,
+      "versionNonce": 2091218216,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813582126,
+      "link": null,
+      "locked": false,
+      "text": "DEL\nRPUSH",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "-GBLQUMDDIDr4wosUZwk3",
+      "originalText": "DEL\nRPUSH",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "eynfYCR1ENV8AAHXCcEq2",
+      "type": "arrow",
+      "x": -4158.285342017685,
+      "y": 4708.492758988855,
+      "width": 710,
+      "height": 480,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3o",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1910278488,
+      "version": 104,
+      "versionNonce": 306987864,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "XNvuwFObZyKkRm5WLKLlj"
+        }
+      ],
+      "updated": 1793813653468,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          325,
+          -272.5
+        ],
+        [
+          710,
+          -480
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": 0.5771797265744621,
+        "gap": 6.248056129977798
+      },
+      "endBinding": {
+        "elementId": "UUh21Mlgtqf1mtfNtbVhH",
+        "focus": 0.7205561220028639,
+        "gap": 1.7103174602948457
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "XNvuwFObZyKkRm5WLKLlj",
+      "type": "text",
+      "x": -3816.4553249278415,
+      "y": 4464.742758988855,
+      "width": 31.3399658203125,
+      "height": 25,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3p",
+      "roundness": null,
+      "seed": 424289832,
+      "version": 6,
+      "versionNonce": 59861032,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813636493,
+      "link": null,
+      "locked": false,
+      "text": "init",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "eynfYCR1ENV8AAHXCcEq2",
+      "originalText": "init",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "ZNRn721dpWH3kqqJ7xMme",
+      "type": "arrow",
+      "x": -3450.7853420176853,
+      "y": 4250.992758988855,
+      "width": 712.5,
+      "height": 477.8571428571431,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3q",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1746174504,
+      "version": 119,
+      "versionNonce": 626981672,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "a7zndoXMexu1ORukjOGvm"
+        }
+      ],
+      "updated": 1793813788916,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -312,
+          255.75
+        ],
+        [
+          -712.5,
+          477.8571428571431
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "UUh21Mlgtqf1mtfNtbVhH",
+        "focus": 0.6421423462262045,
+        "gap": 4.3159502471926166
+      },
+      "endBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": 0.5957280167134597,
+        "gap": 1.2936507936283306
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "a7zndoXMexu1ORukjOGvm",
+      "type": "text",
+      "x": -3913.105250159775,
+      "y": 4458.492758988855,
+      "width": 212.1398162841797,
+      "height": 50,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3r",
+      "roundness": null,
+      "seed": 2073498920,
+      "version": 43,
+      "versionNonce": 1752759848,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813696478,
+      "link": null,
+      "locked": false,
+      "text": "processing finshed\nprocessing terminated",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "ZNRn721dpWH3kqqJ7xMme",
+      "originalText": "processing finshed\nprocessing terminated",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "sppVmNYRmoGXOl7iD8zkv",
+      "type": "arrow",
+      "x": -4156.106770589113,
+      "y": 4762.635616131712,
+      "width": 698,
+      "height": 480,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3s",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 478945368,
+      "version": 95,
+      "versionNonce": 19194408,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "khfMOMnZcV2JgstUPL6GP"
+        }
+      ],
+      "updated": 1793813748636,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          372,
+          224
+        ],
+        [
+          698,
+          480
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": -0.48224128571652375,
+        "gap": 7.540386815772329
+      },
+      "endBinding": {
+        "elementId": "3OYbwmlSgYjKNyojneL3N",
+        "focus": -0.669114935025833,
+        "gap": 4.448412698388893
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "khfMOMnZcV2JgstUPL6GP",
+      "type": "text",
+      "x": -3828.776753499269,
+      "y": 4994.135616131712,
+      "width": 31.3399658203125,
+      "height": 25,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3t",
+      "roundness": null,
+      "seed": 1879773992,
+      "version": 12,
+      "versionNonce": 90478376,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813731838,
+      "link": null,
+      "locked": false,
+      "text": "init",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "sppVmNYRmoGXOl7iD8zkv",
+      "originalText": "init",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "xrGJHn7U3BYsDQ81U3P7n",
+      "type": "arrow",
+      "x": -3452.106770589113,
+      "y": 5280.635616131712,
+      "width": 724,
+      "height": 510,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3u",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 995613016,
+      "version": 96,
+      "versionNonce": 2079911768,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "gJUZiN1zCVGdX_VR606Oa"
+        }
+      ],
+      "updated": 1793813782956,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -390,
+          -218
+        ],
+        [
+          -724,
+          -510
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "3OYbwmlSgYjKNyojneL3N",
+        "focus": -0.9128623042505105,
+        "gap": 1
+      },
+      "endBinding": {
+        "elementId": "0bANYpzAq__WHnadlxqi4",
+        "focus": -0.43436281423377626,
+        "gap": 2.172316811081784
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "gJUZiN1zCVGdX_VR606Oa",
+      "type": "text",
+      "x": -3916.6167040607925,
+      "y": 5019.635616131712,
+      "width": 169.01986694335938,
+      "height": 50,
+      "angle": 0,
+      "strokeColor": "#1971c2",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3v",
+      "roundness": null,
+      "seed": 419979048,
+      "version": 58,
+      "versionNonce": 1233722664,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813775638,
+      "link": null,
+      "locked": false,
+      "text": "insert finished\ninsert terminated",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "xrGJHn7U3BYsDQ81U3P7n",
+      "originalText": "insert finished\ninsert terminated",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "3m7jrA14cWOHVxvvF9vlr",
+      "type": "arrow",
+      "x": -3196.106770589113,
+      "y": 4228.635616131712,
+      "width": 984,
+      "height": 62,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3w",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 2121109336,
+      "version": 78,
+      "versionNonce": 1121960232,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "57HRxa8uJFvSa7GrhsFKp"
+        }
+      ],
+      "updated": 1793813941724,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          984,
+          -62
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "UUh21Mlgtqf1mtfNtbVhH",
+        "focus": 0.1116207909224596,
+        "gap": 5.884920634944592
+      },
+      "endBinding": {
+        "elementId": "M8YW8u_SIffCfrXAx2xyv",
+        "focus": 0.5095900194557575,
+        "gap": 12.411872984847378
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "57HRxa8uJFvSa7GrhsFKp",
+      "type": "text",
+      "x": -2758.12675197339,
+      "y": 4172.635616131712,
+      "width": 108.03996276855469,
+      "height": 50,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3x",
+      "roundness": null,
+      "seed": 1876522584,
+      "version": 17,
+      "versionNonce": 1176189784,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793813931045,
+      "link": null,
+      "locked": false,
+      "text": "XREAD\nXPENDING",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "3m7jrA14cWOHVxvvF9vlr",
+      "originalText": "XREAD\nXPENDING",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "5z7l_zNXzaQ2Evog2qfrq",
+      "type": "arrow",
+      "x": -3200.106770589113,
+      "y": 5258.635616131712,
+      "width": 972,
+      "height": 610,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3xG",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 856839976,
+      "version": 267,
+      "versionNonce": 1682793304,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "HudZweNIQ4r76oNH5qhKM",
+          "type": "text"
+        }
+      ],
+      "updated": 1793814074935,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          972,
+          -610
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "3OYbwmlSgYjKNyojneL3N",
+        "focus": 0.7771142195786022,
+        "gap": 8.968253968278077
+      },
+      "endBinding": {
+        "elementId": "yHk0WN3OqpIO1tRoGgTpH",
+        "focus": 1.0158236690806333,
+        "gap": 14
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "HudZweNIQ4r76oNH5qhKM",
+      "type": "text",
+      "x": -2748.12675197339,
+      "y": 4182.635616131712,
+      "width": 108.03996276855469,
+      "height": 50,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3xV",
+      "roundness": null,
+      "seed": 2134904664,
+      "version": 19,
+      "versionNonce": 1199124056,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793814058575,
+      "link": null,
+      "locked": false,
+      "text": "XREAD\nXPENDING",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "5z7l_zNXzaQ2Evog2qfrq",
+      "originalText": "XREAD\nXPENDING",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "A7jO_ljtdqxQrJo08QiVy",
+      "type": "arrow",
+      "x": -3190.106770589113,
+      "y": 4234.635616131712,
+      "width": 970,
+      "height": 220,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3y",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 1721588776,
+      "version": 80,
+      "versionNonce": 1703904600,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "type": "text",
+          "id": "VfjBe35KyZ0T_myVgeKnM"
+        }
+      ],
+      "updated": 1793814055348,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          970,
+          220
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "UUh21Mlgtqf1mtfNtbVhH",
+        "focus": -0.4691895255878673,
+        "gap": 11.884920634944592
+      },
+      "endBinding": {
+        "elementId": "sCq5greNl-DPyY4AYr8KY",
+        "focus": -0.7813650822812857,
+        "gap": 7.80178082176144
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "VfjBe35KyZ0T_myVgeKnM",
+      "type": "text",
+      "x": -2732.1667528889175,
+      "y": 4332.135616131712,
+      "width": 54.119964599609375,
+      "height": 25,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b3z",
+      "roundness": null,
+      "seed": 1324961576,
+      "version": 10,
+      "versionNonce": 1593148968,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793814053398,
+      "link": null,
+      "locked": false,
+      "text": "LPOP",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "A7jO_ljtdqxQrJo08QiVy",
+      "originalText": "LPOP",
+      "autoResize": true,
+      "lineHeight": 1.25
+    },
+    {
+      "id": "iHevWzBv8-q0o7t8BBrPH",
+      "type": "arrow",
+      "x": -3202.106770589113,
+      "y": 5266.635616131712,
+      "width": 978,
+      "height": 324,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b40",
+      "roundness": {
+        "type": 2
+      },
+      "seed": 939071784,
+      "version": 212,
+      "versionNonce": 1075365672,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "BfRkZoX5EuBeicmpuJAba",
+          "type": "text"
+        }
+      ],
+      "updated": 1793814086928,
+      "link": null,
+      "locked": false,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          978,
+          -324
+        ]
+      ],
+      "lastCommittedPoint": null,
+      "startBinding": {
+        "elementId": "3OYbwmlSgYjKNyojneL3N",
+        "focus": 0.7303417169684636,
+        "gap": 6.968253968278077
+      },
+      "endBinding": {
+        "elementId": "2HkCvHu5QgM7qdMP2ZnoY",
+        "focus": 0.7303394225044221,
+        "gap": 6.80178082176144
+      },
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "elbowed": false
+    },
+    {
+      "id": "BfRkZoX5EuBeicmpuJAba",
+      "type": "text",
+      "x": -2722.1667528889175,
+      "y": 4342.135616131712,
+      "width": 54.119964599609375,
+      "height": 25,
+      "angle": 0,
+      "strokeColor": "#e03131",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "index": "b41",
+      "roundness": null,
+      "seed": 849243480,
+      "version": 12,
+      "versionNonce": 1036799064,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1793814076573,
+      "link": null,
+      "locked": false,
+      "text": "LPOP",
+      "fontSize": 20,
+      "fontFamily": 5,
+      "textAlign": "center",
+      "verticalAlign": "middle",
+      "containerId": "iHevWzBv8-q0o7t8BBrPH",
+      "originalText": "LPOP",
       "autoResize": true,
       "lineHeight": 1.25
     }
