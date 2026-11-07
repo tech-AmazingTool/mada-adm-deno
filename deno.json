@@ -37,6 +37,7 @@
     "@std/csv": "jsr:@std/csv@^1.0.6",
     "@std/path": "jsr:@std/path@^1.0.8",
     "@std/streams": "jsr:@std/streams@^1.0.17",
+    "@std/testing": "jsr:@std/testing@^1.0.21",
     "geo-coordinates-parser": "npm:geo-coordinates-parser@^1.7.4",
     "mongodb": "npm:mongodb@^6.21.0",
     "mysql2": "npm:mysql2@^3.22.3"
@@ -66,6 +67,6 @@
   },
   "exclude": ["bin/"],
   "test": {
-    "exclude": ["**/*.integration.test.ts", "bin/*"]
+    "exclude": ["bin/*"]
   }
 }
