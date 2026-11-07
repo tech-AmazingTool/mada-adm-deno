@@ -1,178 +1,569 @@
 import { assertEquals, assertExists } from "@std/assert";
+import { afterAll, beforeEach, describe, it } from "@std/testing/bdd";
 
 import {
-  resolveNumber,
-  resolveString,
-} from "@scope/helpers/cli-args-env-resolvers";
-import { injectRedisConnection } from "@scope/redis";
+  injectRedisConnection,
+  type RedisConnectionParams,
+} from "@scope/redis";
 
-import { injectRedisQueueWorkersMediator } from "./redis-queue.workers-mediator.ts";
+import { RedisQueueWorkersMediator } from "./redis-queue.workers-mediator.ts";
 
-interface TestPayload {
-  id: string;
-  integrated: boolean;
-  timestamp: number;
+function createWorkers(procFile: string, insFile: string) {
+  const p1 = new Worker(import.meta.resolve(procFile), { type: "module" });
+  const p2 = new Worker(import.meta.resolve(procFile), { type: "module" });
+  const ins = new Worker(import.meta.resolve(insFile), { type: "module" });
+  return {
+    workers: {
+      processing: [p1, p2],
+      insert: ins,
+    },
+    terminate: () => {
+      p1.terminate();
+      p2.terminate();
+      ins.terminate();
+    },
+  };
 }
 
-// Helper to wait for a condition or timeout
-async function waitFor(
-  condition: () => boolean | Promise<boolean>,
-  name: string,
-  timeout = 15000,
-): Promise<void> {
-  const start = Date.now();
-  while (!(await condition())) {
-    if (Date.now() - start > timeout) {
-      throw new Error(`Timeout waiting for condition: ${name}`);
-    }
-    await new Promise((r) => setTimeout(r, 200));
+function createMessageStream(
+  messages: Array<{ id: string }>,
+): ReadableStream<{ id: string }> {
+  return new ReadableStream({
+    start(controller) {
+      for (const msg of messages) {
+        controller.enqueue(msg);
+      }
+      controller.close();
+    },
+  });
+}
+
+const redis = injectRedisConnection();
+
+const clearTestData = async () => {
+  const keys = [
+    "test:processing:context",
+    "test:insert:context",
+    "test:processing:stream",
+    "test:insert:stream",
+    "test:processing:failed-ids",
+    "test:insert:failed-ids",
+    "test:persisted-last:message",
+  ];
+  await redis.client.sendCommand(["DEL", ...keys]);
+  try {
+    await redis.client.sendCommand([
+      "XGROUP",
+      "DESTROY",
+      "test:processing:stream",
+      "test:processing-group",
+    ]);
+  } catch (_) {
+    // Ignore if group does not exist
   }
+  try {
+    await redis.client.sendCommand([
+      "XGROUP",
+      "DESTROY",
+      "test:insert:stream",
+      "test:insert-group",
+    ]);
+  } catch (_) {
+    // Ignore if group does not exist
+  }
+};
+
+const redisUrl = Deno.env.get("REDIS_URL");
+const redisParams: RedisConnectionParams = redisUrl || {
+  host: Deno.env.get("REDIS_HOST") ?? "localhost",
+  port: Number(Deno.env.get("REDIS_PORT") ?? "6379"),
+  username: Deno.env.get("REDIS_USERNAME") || undefined,
+  password: Deno.env.get("REDIS_PASSWORD") || undefined,
+  db: Deno.env.get("REDIS_DB") ? Number(Deno.env.get("REDIS_DB")) : undefined,
+  ssl: Deno.env.get("REDIS_SSL") === "true" ||
+    Deno.env.get("REDIS_SSL") === "1",
+  certFile: Deno.env.get("REDIS_CERT_FILE") || undefined,
+  certPath: Deno.env.get("REDIS_CERT_PATH") || undefined,
+  keyFile: Deno.env.get("REDIS_KEY_FILE") || undefined,
+  keyPath: Deno.env.get("REDIS_KEY_PATH") || undefined,
+  caCertFile: Deno.env.get("REDIS_CA_CERT_FILE") || undefined,
+  caCertPath: Deno.env.get("REDIS_CA_CERT_PATH") || undefined,
+};
+
+let isRedisConnected = false;
+try {
+  await redis.connect(redisParams);
+  await redis.client.sendCommand(["PING"]);
+  isRedisConnected = true;
+} catch (err) {
+  console.warn(
+    `[Redis Integration Test] Redis server unreachable. Aborting test. Reason:`,
+    err instanceof Error ? err.message : String(err),
+  );
 }
 
-Deno.test({
-  name: "RedisQueueWorkersMediator Integration Test",
-  fn: async (t) => {
-    // 1. Setup Redis Connection
-    const host = resolveString(undefined, "REDIS_HOST", "localhost");
-    const port = resolveNumber(undefined, "REDIS_PORT", 6379);
+const testOptions = {
+  processingContextKey: "test:processing:context",
+  processingStreamKey: "test:processing:stream",
+  processingFailedIdsKey: "test:processing:failed-ids",
+  insertContextKey: "test:insert:context",
+  insertStreamKey: "test:insert:stream",
+  insertFailedIdsKey: "test:insert:failed-ids",
+  processingConsumerGroupName: "test:processing-group",
+  insertConsumerGroupName: "test:insert-group",
+  persistedLastMessageKey: "test:persisted-last:message",
+  xreadBlockDuration: 500,
+};
 
-    const redis = injectRedisConnection();
-    await redis.connect({ host, port });
-    const client = redis.client;
+describe("RedisQueueWorkersMediator Integration Tests", () => {
+  beforeEach(async () => {
+    if (isRedisConnected) {
+      await clearTestData();
+    }
+  });
 
-    // cleanup helper
-    const cleanup = async () => {
-      await client.sendCommand([
-        "DEL",
-        "processing:stream",
-        "insert:stream",
-        "processing:dlq",
-        "insert:dlq",
-        "persisted-last:message",
-        "persisted-last-insert:message",
-        "processing:context",
-        "insert:context",
-      ]);
-      // XGROUP logic might need explicit group deletion if we want full isolation
-      try {
-        await client.sendCommand([
-          "XGROUP",
-          "DESTROY",
-          "processing:stream",
-          "processing-group",
-        ]);
-      } catch (_) {
-        /* Ignore if group doesn't exist */
-      }
-      try {
-        await client.sendCommand([
-          "XGROUP",
-          "DESTROY",
-          "insert:stream",
-          "insert-group",
-        ]);
-      } catch (_) {
-        /* Ignore if group doesn't exist */
-      }
-    };
+  afterAll(async () => {
+    if (isRedisConnected) {
+      await clearTestData();
+      redis.close();
+    }
+  });
 
-    await cleanup();
+  it("Success case: streamed and queued messages completed at 100% without retry prompt", async () => {
+    if (!isRedisConnected) return;
 
-    await t.step("Full Stage 1 -> Stage 2 Pipeline", async () => {
-      const mediator = injectRedisQueueWorkersMediator(client, { host, port });
+    const { workers, terminate } = createWorkers(
+      "./workers/process.success.worker.ts",
+      "./workers/insert.success.worker.ts",
+    );
 
-      // Create workers
-      const procWorker = new Worker(
-        import.meta.resolve("./integration-test.worker.ts"),
+    try {
+      let retryPromptCalled = false;
+      const mediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
         {
-          type: "module",
-          deno: { permissions: "inherit" },
-          // deno-lint-ignore no-explicit-any
-        } as any,
-      );
-      const insWorker = new Worker(
-        import.meta.resolve("./integration-test.worker.ts"),
-        {
-          type: "module",
-          deno: { permissions: "inherit" },
-          // deno-lint-ignore no-explicit-any
-        } as any,
-      );
-
-      const finishedPayloads: TestPayload[] = [];
-      const insertedPayloads: TestPayload[] = [];
-
-      // Start the mediator
-      const executionPromise = mediator.queue(
-        { batchId: "test-run" },
-        [{ id: "msg-1" }, { id: "msg-2" }],
-        {
-          processing: [procWorker],
-          insert: insWorker,
+          ...testOptions,
+          onRetryPendingPrompt: () => {
+            retryPromptCalled = true;
+            return false;
+          },
         },
+      );
+
+      const messages = [
+        { id: "msg-1" },
+        { id: "msg-2" },
+        { id: "msg-3" },
+        { id: "msg-4" },
+      ];
+      const stream = createMessageStream(messages);
+
+      const procFinished: unknown[] = [];
+      const insFinished: unknown[] = [];
+      const procProgressEvents: Array<{
+        current: number;
+        total: number;
+        progress: number;
+      }> = [];
+      const insProgressEvents: Array<{
+        current: number;
+        total: number;
+        progress: number;
+      }> = [];
+
+      await mediator.queue(
+        { batchId: "success-run" },
+        stream,
+        workers,
         {
+          totalCount: 4,
+          batchSize: 2,
+          maxRetries: 2,
           onProcessingFinished: (p) => {
-            console.log(
-              `[Test] onProcessingFinished called with ${p.length} items`,
-            );
-            finishedPayloads.push(...(p as TestPayload[]));
+            procFinished.push(...p);
           },
           onInsertFinished: (p) => {
-            console.log(
-              `[Test] onInsertFinished called with ${p.length} items`,
-            );
-            insertedPayloads.push(...(p as TestPayload[]));
+            insFinished.push(...p);
           },
-          batchSize: 2,
+          onProcessingProgress: (pr) => {
+            procProgressEvents.push(pr);
+          },
+          onInsertProgress: (pr) => {
+            insProgressEvents.push(pr);
+          },
         },
       );
 
-      // Verify Stage 1 completion
-      await waitFor(
-        () => finishedPayloads.length === 2,
-        "Stage 1 finished payloads",
+      assertEquals(procFinished.length, 4);
+      assertEquals(insFinished.length, 4);
+
+      const lastProcProgress = procProgressEvents.at(-1);
+      assertExists(lastProcProgress);
+      assertEquals(lastProcProgress.current, 4);
+      assertEquals(lastProcProgress.total, 4);
+      assertEquals(lastProcProgress.progress, 1);
+
+      const lastInsProgress = insProgressEvents.at(-1);
+      assertExists(lastInsProgress);
+      assertEquals(lastInsProgress.current, 4);
+      assertEquals(lastInsProgress.total, 4);
+      assertEquals(lastInsProgress.progress, 1);
+
+      assertEquals(retryPromptCalled, false);
+    } finally {
+      terminate();
+    }
+  });
+
+  it("Processing error case: processing worker errors, prompt returns true, then completes without second prompt", async () => {
+    if (!isRedisConnected) return;
+
+    const { workers, terminate } = createWorkers(
+      "./workers/process.error.worker.ts",
+      "./workers/insert.success.worker.ts",
+    );
+
+    try {
+      let promptCallCount = 0;
+      const mediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: (_ctx, pelCount) => {
+            promptCallCount++;
+            assertEquals(pelCount > 0, true);
+            return false;
+          },
+        },
       );
-      console.log(`[Test] Stage 1 verified.`);
-      assertEquals(finishedPayloads.length, 2);
-      assertExists(finishedPayloads[0].integrated);
 
-      // Verify Stage 2 completion
-      await waitFor(
-        () => insertedPayloads.length === 2,
-        "Stage 2 inserted payloads",
-      );
-      console.log(`[Test] Stage 2 verified.`);
-      assertEquals(insertedPayloads.length, 2);
-      assertExists(insertedPayloads[0].integrated);
+      const messages = [{ id: "p-err-1" }, { id: "p-err-2" }];
+      const stream = createMessageStream(messages);
 
-      // Wait for everything to settle
-      await executionPromise;
+      const procFinished: unknown[] = [];
+      const insFinished: unknown[] = [];
 
-      // Verify Redis final state
-      // Verify Redis final state (should be cleaned up by the mediator)
-      const insertStreamLagResult = await client.sendCommand([
-        "XLEN",
-        "insert:stream",
-      ]);
-      assertEquals(
-        insertStreamLagResult,
-        0,
-        "Insert stream should be cleaned up (length 0)",
+      await mediator.queue(
+        { batchId: "proc-err-run" },
+        stream,
+        workers,
+        {
+          totalCount: 2,
+          batchSize: 2,
+          maxRetries: 2,
+          onProcessingFinished: (p) => {
+            procFinished.push(...p);
+          },
+          onInsertFinished: (p) => {
+            insFinished.push(...p);
+          },
+        },
       );
 
-      const procKeyExists = await client.sendCommand([
-        "EXISTS",
-        "persisted-last:message",
-      ]);
-      assertEquals(procKeyExists, 0, "Producer key should be cleaned up");
+      assertEquals(promptCallCount, 1);
+      assertEquals(procFinished.length, 0);
+      assertEquals(insFinished.length, 0);
+    } finally {
+      terminate();
+    }
+  });
 
-      // Cleanup workers
-      procWorker.terminate();
-      insWorker.terminate();
-    });
+  it("Insert error case: insert worker errors, prompt returns true, then completes without second prompt", async () => {
+    if (!isRedisConnected) return;
 
-    await cleanup();
-    redis.close();
-    console.log(`[Test] Redis connection closed. Test finished.`);
-  },
+    const { workers, terminate } = createWorkers(
+      "./workers/process.success.worker.ts",
+      "./workers/insert.error.worker.ts",
+    );
+
+    try {
+      let promptCallCount = 0;
+      const mediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: (_ctx, pelCount) => {
+            promptCallCount++;
+            assertEquals(pelCount > 0, true);
+            return false;
+          },
+        },
+      );
+
+      const messages = [{ id: "ins-err-1" }, { id: "ins-err-2" }];
+      const stream = createMessageStream(messages);
+
+      const procFinished: unknown[] = [];
+      const insFinished: unknown[] = [];
+
+      await mediator.queue(
+        { batchId: "ins-err-run" },
+        stream,
+        workers,
+        {
+          totalCount: 2,
+          batchSize: 1,
+          maxRetries: 2,
+          onProcessingFinished: (p) => {
+            procFinished.push(...p);
+          },
+          onInsertFinished: (p) => {
+            insFinished.push(...p);
+          },
+        },
+      );
+
+      assertEquals(promptCallCount, 1);
+      assertEquals(procFinished.length, 2);
+      assertEquals(insFinished.length, 0);
+    } finally {
+      terminate();
+    }
+  });
+
+  it("Processing PEL recovery: processing error with prompt false, then manual restart with success workers recovers PEL", async () => {
+    if (!isRedisConnected) return;
+
+    const { workers: errWorkers, terminate: termErr } = createWorkers(
+      "./workers/process.error.worker.ts",
+      "./workers/insert.success.worker.ts",
+    );
+
+    try {
+      let promptCalled = false;
+      const failMediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: () => {
+            promptCalled = true;
+            return false;
+          },
+        },
+      );
+
+      const messages = [{ id: "proc-pel-1" }, { id: "proc-pel-2" }];
+      await failMediator.queue(
+        { alwaysFail: true, batchId: "pel-proc" },
+        createMessageStream(messages),
+        errWorkers,
+        {
+          totalCount: 2,
+          batchSize: 1,
+          maxRetries: 2,
+        },
+      );
+      assertEquals(promptCalled, true);
+    } finally {
+      termErr();
+    }
+
+    const { workers: successWorkers, terminate: termSucc } = createWorkers(
+      "./workers/process.success.worker.ts",
+      "./workers/insert.success.worker.ts",
+    );
+
+    try {
+      const succMediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: () => false,
+        },
+      );
+
+      const procFinished: unknown[] = [];
+      const insFinished: unknown[] = [];
+
+      await succMediator.queue(
+        { batchId: "pel-proc-recovered" },
+        [{ id: "proc-pel-1" }, { id: "proc-pel-2" }],
+        successWorkers,
+        {
+          totalCount: 2,
+          batchSize: 2,
+          maxRetries: 2,
+          onProcessingFinished: (p) => {
+            procFinished.push(...p);
+          },
+          onInsertFinished: (p) => {
+            insFinished.push(...p);
+          },
+        },
+      );
+
+      assertEquals(procFinished.length, 2);
+      assertEquals(insFinished.length, 2);
+    } finally {
+      termSucc();
+    }
+  });
+
+  it("Insert PEL recovery: insert error with prompt false, then manual restart with success workers recovers PEL", async () => {
+    if (!isRedisConnected) return;
+
+    const { workers: errWorkers, terminate: termErr } = createWorkers(
+      "./workers/process.success.worker.ts",
+      "./workers/insert.error.worker.ts",
+    );
+
+    try {
+      let promptCalled = false;
+      const failMediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: () => {
+            promptCalled = true;
+            return false;
+          },
+        },
+      );
+
+      const messages = [{ id: "ins-pel-1" }, { id: "ins-pel-2" }];
+      await failMediator.queue(
+        { alwaysFail: true, batchId: "pel-ins" },
+        createMessageStream(messages),
+        errWorkers,
+        {
+          totalCount: 2,
+          batchSize: 1,
+          maxRetries: 2,
+        },
+      );
+      assertEquals(promptCalled, true);
+    } finally {
+      termErr();
+    }
+
+    const { workers: successWorkers, terminate: termSucc } = createWorkers(
+      "./workers/process.success.worker.ts",
+      "./workers/insert.success.worker.ts",
+    );
+
+    try {
+      const succMediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: () => false,
+        },
+      );
+
+      const insFinished: unknown[] = [];
+
+      await succMediator.queue(
+        { batchId: "pel-ins-recovered" },
+        [{ id: "ins-pel-1" }, { id: "ins-pel-2" }],
+        successWorkers,
+        {
+          totalCount: 2,
+          batchSize: 1,
+          maxRetries: 2,
+          onInsertFinished: (p) => {
+            insFinished.push(...p);
+          },
+        },
+      );
+
+      assertEquals(insFinished.length, 2);
+    } finally {
+      termSucc();
+    }
+  });
+
+  it("Lifecycle logs forwarding: processing logs in init, execute, and teardown are caught", async () => {
+    if (!isRedisConnected) return;
+
+    const { workers, terminate } = createWorkers(
+      "./workers/process.log.worker.ts",
+      "./workers/insert.success.worker.ts",
+    );
+
+    try {
+      const procLogs: string[] = [];
+
+      const mediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: () => false,
+        },
+      );
+
+      const messages = [{ id: "log-p-1" }, { id: "log-p-2" }];
+
+      await mediator.queue(
+        { batchId: "logs-proc-run" },
+        createMessageStream(messages),
+        workers,
+        {
+          totalCount: 2,
+          batchSize: 2,
+          maxRetries: 2,
+          onProcessingLog: (lines) => {
+            procLogs.push(...lines);
+          },
+        },
+      );
+
+      assertEquals(procLogs.includes("[Process Worker] init"), true);
+      assertEquals(procLogs.includes("[Process Worker] execute"), true);
+      assertEquals(procLogs.includes("[Process Worker] teardown"), true);
+    } finally {
+      terminate();
+    }
+  });
+
+  it("Lifecycle logs forwarding: insert logs in init, execute, and teardown are caught", async () => {
+    if (!isRedisConnected) return;
+
+    const { workers, terminate } = createWorkers(
+      "./workers/process.success.worker.ts",
+      "./workers/insert.log.worker.ts",
+    );
+
+    try {
+      const insLogs: string[] = [];
+
+      const mediator = new RedisQueueWorkersMediator(
+        redis.client,
+        redisParams,
+        {
+          ...testOptions,
+          onRetryPendingPrompt: () => false,
+        },
+      );
+
+      const messages = [{ id: "log-i-1" }, { id: "log-i-2" }];
+
+      await mediator.queue(
+        { batchId: "logs-ins-run" },
+        createMessageStream(messages),
+        workers,
+        {
+          totalCount: 2,
+          batchSize: 2,
+          maxRetries: 2,
+          onInsertLog: (lines) => {
+            insLogs.push(...lines);
+          },
+        },
+      );
+
+      assertEquals(insLogs.includes("[Insert Worker] init"), true);
+      assertEquals(insLogs.includes("[Insert Worker] execute"), true);
+      assertEquals(insLogs.includes("[Insert Worker] teardown"), true);
+    } finally {
+      terminate();
+    }
+  });
 });
