@@ -5,10 +5,6 @@
 export const WORKER_EVENTS = {
   /** Sent from the main thread to a worker to initialize the first contact and transfer its readable stream. */
   INIT: "init",
-  /** Sent from the main thread to a processing worker to execute a task. */
-  PROCESS: "process",
-  /** Sent from the main thread to the insertion worker to persist a payload. */
-  INSERT: "insert",
   /** Sent from a processing worker to the main thread indicating task completion. */
   PROCESSING_FINISHED: "processingFinished",
   /** Sent from the insertion worker to the main thread indicating successful insertion. */
@@ -19,6 +15,8 @@ export const WORKER_EVENTS = {
   DONE: "done",
   /** Sent from a worker to indicate it has been interrupted by an error. */
   INTERRUPTED: "interrupted",
+  /** Sent from the workers to the mediator to forward the console logs from the workers */
+  LOG: "log",
 } as const;
 
 /** Default number of retries before a worker job fails completely. */
