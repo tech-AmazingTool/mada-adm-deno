@@ -125,8 +125,12 @@ import {
   isProvinceValues,
   isRegionValues,
 } from "@scope/helpers/models";
+import { injectAdmIntegrationProgressRenderer } from "@scope/helpers/render-adm-integration-progress";
 import { injectInMemoryQueueWorkersMediator } from "@scope/lib/in-memory-workers-mediators";
-import { injectRedisQueueWorkersMediator } from "@scope/lib/redis-workers-mediators";
+import {
+  injectRedisQueueWorkersMediator,
+  RedisQueueWorkersMediator,
+} from "@scope/lib/redis-workers-mediators";
 import type {
   QueueWorkersMediator,
   WorkerPool,
@@ -599,7 +603,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
   private async handleGlobalAction(args: GlobalCliConfigResolved) {
     console.log(
       colors.blue.bold(
-        `\n🚀 Initializing Madagascar Administrative Boundaries (Mada ADM) CLI...`,
+        `🚀 Initializing Madagascar Administrative Boundaries (Mada ADM) CLI...\n`,
       ),
     );
     console.log(colors.gray(`   Database Type: ${args.dbType}`));
@@ -672,11 +676,12 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
       default:
         break;
     }
+    console.log();
 
     const db = await injectDbConnection(args.dbType);
     this.#db = db;
 
-    console.log(colors.blue(`\n🔌 Establishing database connection...`));
+    console.log(colors.blue(`🔌 Establishing database connection...`));
     await attemptDbConnection(db, {
       dbType: args.dbType,
       pg: args.pg,
@@ -778,24 +783,36 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
           {
             processingContextKey: "seed-adm:processing:context",
             processingStreamKey: "seed-adm:processing:stream",
+            processingFailedIdsKey: "seed-adm:processing:failed-ids",
             insertContextKey: "seed-adm:insert:context",
             insertStreamKey: "seed-adm:insert:stream",
+            insertFailedIdsKey: "seed-adm:insert:failed-ids",
             processingConsumerGroupName: "seed-adm:processing-group",
             insertConsumerGroupName: "seed-adm:insert-group",
             persistedLastMessageKey: "seed-adm:persisted-last:message",
-            persistedLastInsertMessageKey:
-              "seed-adm:persisted-last-insert:message",
-            processingDlqStreamKey: "seed-adm:processing:dlq",
-            insertDlqStreamKey: "seed-adm:insert:dlq",
-            healthcheckInterval: args.workerHealthcheckInterval,
-            pendingMinDurationThreshold: args.workerPendingMinDurationThreshold,
             xreadBlockDuration: args.xreadBlockDuration,
+            compareMessages: compareAdmValues,
+            onRetryPendingPrompt: async () => {
+              console.log(
+                colors.yellow(
+                  `⚠️  The processings or the insertions of some ADM territories were not completed. Do you want to retry those tasks?`,
+                ),
+              );
+              const retry = await Confirm.prompt({
+                message: "Retry?",
+                default: true,
+              });
+              if (!retry) {
+                Deno.exit(1);
+              }
+              return true;
+            },
             debug: args.cliDebug,
           },
         );
 
         console.log(
-          colors.green.bold(`✅ Redis Queue Workers Mediator initialized.`),
+          colors.green.bold(`✅ Redis Queue Workers Mediator initialized.\n`),
         );
       } else {
         console.log(
@@ -851,7 +868,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
         );
         console.log(
           colors.yellow(
-            `\nWould you like to update the current Mada ADM configuration ?`,
+            `Would you like to update the current Mada ADM configuration ?\n`,
           ),
         );
         shouldResetAdmConfig = await Confirm.prompt({
@@ -864,7 +881,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
         if (prevAdmConfigValues) {
           console.log(
             colors.yellow(
-              `\nWould you like to clear the tables of the previous configuration ?\nIf no, they will be left intact while new tables are created for the new configuration.`,
+              `Would you like to clear the tables of the previous configuration ?\nIf no, they will be left intact while new tables are created for the new configuration.\n`,
             ),
           );
           const shouldClearPrevTables = await Confirm.prompt({
@@ -930,7 +947,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
               ];
               console.log(
                 colors.red(
-                  `\n🗑️  Dropping all tables for the previous configuration...`,
+                  `🗑️  Dropping all tables for the previous configuration...\n`,
                 ),
               );
               await this.#db.transaction(async (transactionContext) => {
@@ -941,7 +958,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
               }, DDL_TRANSACTION_OPTIONS);
               console.log(
                 colors.green.bold(
-                  `✅  All tables for the previous configuration dropped successfully.`,
+                  `✅  All tables for the previous configuration dropped successfully.\n`,
                 ),
               );
             }
@@ -954,10 +971,10 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
         }
         const configPromptTitle = prevAdmConfigValues
           ? colors.yellow(
-            `\nℹ️  Updating Mada ADM configuration values:`,
+            `ℹ️  Updating Mada ADM configuration values:\n`,
           )
           : colors.yellow(
-            `\nℹ️  No existing ADM configuration found. Please provide the configuration values:`,
+            `ℹ️  No existing ADM configuration found. Please provide the configuration values:\n`,
           );
         console.log(configPromptTitle);
         const result = await promptMadaAdmConfig();
@@ -990,7 +1007,9 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
           activeAdmConfigValues,
         );
       }
-      const prevJobContext = await mediator.persistedContext;
+      const prevJobContext = mediator instanceof RedisQueueWorkersMediator
+        ? await mediator.persistedContext as SeedAdmJobContext
+        : null;
       provincesDDL = injectProvincesDDL(
         activeAdmConfigValues,
         args.dbType,
@@ -1046,12 +1065,12 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
       ) {
         console.log(
           colors.yellow(
-            "\nℹ️  Found previous job context.\nYou can choose to resume with it or clear it and restart fresh.",
+            "ℹ️  Found previous job context.\nYou can choose to resume with it or clear it and restart fresh.",
           ),
         );
         console.log(
           colors.yellow(
-            "⚠️  WARNING: If you choose to resume, ensure that the input data has not been modified since the job was last interrupted.\nResuming with modified input data will result in an inconsistent database state.",
+            "⚠️  WARNING: If you choose to resume, ensure that the input data has not been modified since the job was last interrupted.\nResuming with modified input data will result in an inconsistent database state.\n",
           ),
         );
         const resume = await Confirm.prompt({
@@ -1064,9 +1083,11 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
         }
       }
       if (shouldClearJobContext) {
-        console.log(colors.red("\nClearing job context..."));
-        await mediator.clearPersisted();
-        console.log(colors.green("Job context cleared successfully."));
+        console.log(colors.red("Clearing job context..."));
+        if (mediator instanceof RedisQueueWorkersMediator) {
+          await mediator.clearPersisted();
+        }
+        console.log(colors.green("Job context cleared successfully.\n"));
       }
       if (shouldClearDatabase) {
         const ddls = [
@@ -1079,7 +1100,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
         if (admTablesExist) {
           console.log(
             colors.yellow(
-              "\nThe current ADM tables are going to be dropped anyway because the job must always start with empty ADM tables.\nYou can choose to continue or abort the action now.",
+              "The current ADM tables are going to be dropped anyway because the job must always start with empty ADM tables.\nYou can choose to continue or abort the action now.\n",
             ),
           );
           const userWantsToContinue = await Confirm.prompt({
@@ -1087,28 +1108,28 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
             default: true,
           });
           if (!userWantsToContinue) {
-            console.log(colors.red("\nAborting the action."));
+            console.log(colors.red("Aborting the action.\n"));
             return;
           }
           await this.#db.transaction(async (transactionContext) => {
-            console.log(colors.red("\nDeleting all Mada ADM tables..."));
+            console.log(colors.red("Deleting all Mada ADM tables..."));
             for (const ddl of ddls.toReversed()) {
               console.log(`Dropping the table ${ddl.tableName}...`);
               await ddl.drop(transactionContext);
             }
             console.log(
-              colors.green("\nAll Mada ADM tables dropped successfully."),
+              colors.green("All Mada ADM tables dropped successfully.\n"),
             );
           }, DDL_TRANSACTION_OPTIONS);
         }
         await this.#db.transaction(async (transactionContext) => {
-          console.log(colors.blue("\nCreating all Mada ADM tables..."));
+          console.log(colors.blue("Creating all Mada ADM tables..."));
           for (const ddl of ddls) {
             console.log(`Creating table ${ddl.tableName}...`);
             await ddl.create(transactionContext);
           }
           console.log(
-            colors.green("\nAll Mada ADM tables created successfully."),
+            colors.green("All Mada ADM tables created successfully.\n"),
           );
         }, DDL_TRANSACTION_OPTIONS);
       }
@@ -1131,73 +1152,12 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
       )!;
 
       const startTime = Date.now();
+      const progressRenderer = !args.cliDebug
+        ? injectAdmIntegrationProgressRenderer()
+        : null;
 
       let processingCounter = 0;
       let insertCounter = 0;
-      let totalCountForLevel = 0;
-      let currentLevelTitle = "";
-      let isFirstProgressBarRender = true;
-
-      const renderProgressBars = () => {
-        try {
-          const { columns } = Deno.consoleSize();
-          const barWidth = Math.max(10, columns - 50);
-
-          if (!isFirstProgressBarRender) {
-            Deno.stdout.writeSync(
-              new TextEncoder().encode(
-                ansi.cursorUp(PROGRESS_BARS_LINES_COUNT).eraseDown().toString(),
-              ),
-            );
-          }
-          isFirstProgressBarRender = false;
-
-          const renderBar = (
-            count: number,
-            total: number,
-            label: string,
-            colorFn: (s: string) => string,
-          ) => {
-            const actualCount = Math.min(count, total); // To account for overflows from DLQs
-            const percentage = total > 0
-              ? Math.floor((actualCount / total) * 100)
-              : 0;
-            const filledWidth = Math.floor((percentage / 100) * barWidth);
-            const bar = colorFn("█".repeat(filledWidth)) +
-              colors.gray("░".repeat(barWidth - filledWidth));
-
-            console.log(
-              `${count.toLocaleString()} ${currentLevelTitle}s ${label} / ${total.toLocaleString()} (${percentage}%)`,
-            );
-            console.log(`[${bar}]`);
-          };
-
-          console.log(""); // Empty line at top
-          renderBar(
-            processingCounter,
-            totalCountForLevel,
-            "processed",
-            colors.magenta,
-          );
-          renderBar(
-            insertCounter,
-            totalCountForLevel,
-            "inserted",
-            colors.blue,
-          );
-        } catch (_e) {
-          // Ignore errors if terminal is not available or too small
-        }
-      };
-
-      let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
-      const onResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          renderProgressBars();
-        }, 100);
-      };
-      Deno.addSignalListener("SIGWINCH", onResize);
 
       try {
         for (
@@ -1211,59 +1171,38 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
           const admDataTotalCount = ADM_LEVEL_ENTRIES_COUNT_BY_CODE.get(
             admLevelCode,
           )!;
-          totalCountForLevel = admDataTotalCount;
-          currentLevelTitle = levelTitle;
-          const pulledCounts = await mediator.pulledMessagesCount;
-          processingCounter = pulledCounts.processed;
-          insertCounter = pulledCounts.inserted;
-          isFirstProgressBarRender = true;
+          processingCounter = 0;
+          insertCounter = 0;
 
           console.log(
             colors.rgb8(
-              `\nADM level: ${levelTitle} (${admDataTotalCount} entries)\n`,
+              `ADM level: ${levelTitle} (${admDataTotalCount} entries)\n`,
               0x27be8c,
             ),
           );
 
           jobContext.currentAdmLevel = admLevelCode;
-          console.log(
-            colors.cyan("\n📑 Current job context:\n"),
-            JSON.stringify(jobContext, null, 2),
-            "\n",
-          );
-
-          let inputReadableStream: ReadableStream<AdmValues>;
-          if (await mediator.isJobEnded) {
-            inputReadableStream = new ReadableStream({
-              start(controller) {
-                controller.close();
-              },
-            });
-          } else {
-            const inputFilePathItems: string[] = [];
-            if (import.meta.dirname) {
-              inputFilePathItems.push(import.meta.dirname, "../");
-            } else {
-              inputFilePathItems.push(Deno.cwd());
-            }
-            inputFilePathItems.push(
-              ADM_SEEDING_INPUTS_DIR,
-              ADM_SEEDING_INPUT_FILENAMES_BY_CODE.get(admLevelCode)!,
+          if (args.cliDebug) {
+            console.log(
+              colors.cyan("Current job context:\n"),
+              JSON.stringify(jobContext, null, 2),
             );
-            const inputFilePath = path.join(...inputFilePathItems);
-            const lastPersistedMessage = await mediator.persistedLastMessage;
-            if (lastPersistedMessage) {
-              console.log(
-                `\n${
-                  colors.yellow(
-                    `Skipping messages from the input file until the following message is found:`,
-                  )
-                }`,
-                JSON.stringify(lastPersistedMessage).slice(0, 255),
-              );
-            }
-            let shouldSkipMessage = !!lastPersistedMessage;
-            inputReadableStream = (await Deno.open(inputFilePath))
+            console.log();
+          }
+
+          const inputFilePathItems: string[] = [];
+          if (import.meta.dirname) {
+            inputFilePathItems.push(import.meta.dirname, "../");
+          } else {
+            inputFilePathItems.push(Deno.cwd());
+          }
+          inputFilePathItems.push(
+            ADM_SEEDING_INPUTS_DIR,
+            ADM_SEEDING_INPUT_FILENAMES_BY_CODE.get(admLevelCode)!,
+          );
+          const inputFilePath = path.join(...inputFilePathItems);
+          const inputReadableStream: ReadableStream<AdmValues> =
+            (await Deno.open(inputFilePath))
               .readable
               .pipeThrough(new TextDecoderStream())
               .pipeThrough(new TextLineStream())
@@ -1271,17 +1210,10 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
                 new TransformStream<string, AdmValues>({
                   transform(chunk, controller) {
                     const admValues = JSON.parse(chunk.trim()) as AdmValues;
-                    if (lastPersistedMessage && shouldSkipMessage) {
-                      if (compareAdmValues(admValues, lastPersistedMessage)) {
-                        shouldSkipMessage = false;
-                      }
-                      return;
-                    }
                     controller.enqueue(admValues);
                   },
                 }),
               );
-          }
 
           const disableRedisUrlSearch = `disable-redis=${args.disableRedis}`;
           const processingWorkerURL = new URL(
@@ -1315,43 +1247,90 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
             insert: jobContext,
           };
 
-          renderProgressBars();
+          progressRenderer?.start(admLevelCode);
 
           await mediator.queue(mediatorContext, inputReadableStream, workers, {
             debug: args.cliDebug,
             batchSize: args.queueBatchSize,
+            totalCount: ADM_LEVEL_ENTRIES_COUNT_BY_CODE.get(admLevelCode)!,
             maxRetries: args.queueMaxRetries,
             onProcessingFinished: (payloads: AdmRecord[]) => {
-              for (const payload of payloads) {
-                const name = this.getAdmNameWithContext(payload);
-                console.log(
-                  ansi.cursorUp(PROGRESS_BARS_LINES_COUNT) +
-                    "\x1b[1L" +
+              if (progressRenderer) {
+                const lines = payloads.map((payload) => {
+                  const name = this.getAdmNameWithContext(payload);
+                  return `✅ Processed ${levelTitle}: ${name}`;
+                });
+                progressRenderer.updateLogs(lines);
+              } else {
+                for (const payload of payloads) {
+                  const name = this.getAdmNameWithContext(payload);
+                  console.log(
                     ansi.cursorLeft +
-                    `✅ Processed ${levelTitle}: ${name}` +
-                    ansi.cursorDown(PROGRESS_BARS_LINES_COUNT),
-                );
+                      `✅ Processed ${levelTitle}: ${name}`,
+                  );
+                }
               }
               processingCounter += payloads.length;
-              renderProgressBars();
             },
-            onInsertFinished: (payloads: AdmRecord[]) => {
-              for (const payload of payloads) {
-                const name = this.getAdmNameWithContext(payload);
+            onProcessingProgress: ({ progress, current, total }) => {
+              if (progressRenderer) {
+                progressRenderer.updateProgressBar("processing", current);
+              } else {
                 console.log(
-                  ansi.cursorUp(PROGRESS_BARS_LINES_COUNT) +
-                    "\x1b[1L" +
-                    ansi.cursorLeft +
-                    `💾 Inserted ${levelTitle}: ${name}` +
-                    ansi.cursorDown(PROGRESS_BARS_LINES_COUNT),
+                  `📈 Progress [PROCESSING] : ${current.toLocaleString()} / ${total.toLocaleString()} (${
+                    Number((progress * 100).toFixed(1))
+                  }%)`,
                 );
               }
+            },
+            onProcessingLog: (lines) => {
+              if (progressRenderer) {
+                progressRenderer.updateLogs(lines);
+              } else {
+                console.log(lines.join("\n"));
+              }
+            },
+            onInsertFinished: (payloads: AdmRecord[]) => {
+              if (progressRenderer) {
+                const lines = payloads.map((payload) => {
+                  const name = this.getAdmNameWithContext(payload);
+                  return `💾 Inserted ${levelTitle}: ${name}`;
+                });
+                progressRenderer.updateLogs(lines);
+              } else {
+                for (const payload of payloads) {
+                  const name = this.getAdmNameWithContext(payload);
+                  console.log(
+                    ansi.cursorLeft +
+                      `💾 Inserted ${levelTitle}: ${name}`,
+                  );
+                }
+              }
               insertCounter += payloads.length;
-              renderProgressBars();
+            },
+            onInsertProgress: ({ current, total, progress }) => {
+              if (progressRenderer) {
+                progressRenderer.updateProgressBar("insert", current);
+              } else {
+                console.log(
+                  `📈 Progress [INSERT] : ${current.toLocaleString()} / ${total.toLocaleString()} (${
+                    Number((progress * 100).toFixed(1))
+                  }%)`,
+                );
+              }
+            },
+            onInsertLog: (lines) => {
+              if (progressRenderer) {
+                progressRenderer.updateLogs(lines);
+              } else {
+                console.log(lines.join("\n"));
+              }
             },
           });
 
-          console.log(`\n🧹 Deleting duplicates for ${levelTitle}...`);
+          progressRenderer?.stop();
+
+          console.log(`🧹 Deleting duplicates for ${levelTitle}...`);
           const dmlArgs = [activeAdmConfigValues, args.dbType, this.#db, {
             pgSchema: args.pgSchema,
           }] as const;
@@ -1367,45 +1346,45 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
 
           await tableDML.deleteDuplicates();
           console.log(
-            colors.green(`✅ Duplicates removed for ${levelTitle}.`),
+            colors.green(`✅ Duplicates removed for ${levelTitle}.\n`),
           );
 
           // Cleanup for this level
           for (const w of processingWorkers) w.terminate();
           insertWorker?.terminate();
-          await mediator.clearQueue();
+          if (mediator instanceof RedisQueueWorkersMediator) {
+            await mediator.clearPersisted();
+          }
         }
-
-        // Final Cleanup
-        Deno.removeSignalListener("SIGWINCH", onResize);
-        await mediator.clearPersisted();
 
         console.log(
           colors.green(
-            "\n🏁 Mada ADM data seeding process completed successfully.",
+            "🏁 Mada ADM data seeding process completed successfully.\n",
           ),
         );
       } catch (error) {
-        console.error(`❌ Fatal Error: ${(error as Error).message}`);
+        progressRenderer?.stop();
+        console.error(`❌ Fatal Error: ${(error as Error).message}\n`);
       } finally {
+        progressRenderer?.stop();
         const totalDurationMs = Date.now() - startTime;
         console.log(
-          `\n⏱️  Total duration: ${
-            DateUtils.formatDuration(totalDurationMs)
-          }\n`,
+          `⏱️  Total duration: ${DateUtils.formatDuration(totalDurationMs)}\n`,
         );
       }
     } catch (error) {
-      console.error(`\n❌ Fatal Error: ${(error as Error).message}`);
+      console.error(`❌ Fatal Error: ${(error as Error).message}\n`);
     } finally {
       if (redis) {
         redis.close();
         console.log(
-          colors.gray("\n🔌 Redis connection closed successfully...\n"),
+          colors.gray("🔌 Redis connection closed successfully...\n"),
         );
       }
       await this.#db.close();
-      console.log(colors.gray("🔌 Database connection closed successfully..."));
+      console.log(
+        colors.gray("🔌 Database connection closed successfully...\n"),
+      );
     }
   }
 }
