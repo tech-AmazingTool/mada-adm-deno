@@ -197,6 +197,14 @@ export function displayMadaAdmConfig(
       "A table stores its ADM level index (0 to 4)",
       values.hasAdmLevel ? colors.green("Yes") : colors.red("No"),
     ],
+    ...(values.isActive !== undefined
+      ? [
+        [
+          "Status",
+          values.isActive ? colors.green("Active") : colors.gray("Inactive"),
+        ],
+      ]
+      : []),
   );
   console.log(colors.blue(`\n⚙️  ${title}:`));
   console.log(table.toString());
@@ -211,41 +219,59 @@ export function displayMadaAdmConfig(
 export async function promptMadaAdmConfig(
   prevValues?: Partial<MadaAdmConfigValues>,
 ): Promise<MadaAdmConfigValues> {
+  const hasPrev = prevValues !== undefined;
+  const fmtBool = (val?: boolean) =>
+    hasPrev ? ` (Current: "${val ? "Yes" : "No"}")` : "";
+  const fmtStr = (val?: string | null) =>
+    hasPrev ? ` (Current: "${val ?? ""}")` : "";
+
   const result = await prompt([
     {
       name: "tablesPrefix",
-      message: "Tables Prefix (leave empty for none):",
+      message: `Tables Prefix (leave empty for none)${
+        fmtStr(prevValues?.tablesPrefix)
+      }:`,
       type: Input,
       default: prevValues?.tablesPrefix ?? "",
     },
     {
       name: "isFkRepeated",
-      message: "Are parent tables's foreign keys repeated?",
+      message: `Are parent tables's foreign keys repeated?${
+        fmtBool(prevValues?.isFkRepeated)
+      }`,
       type: Confirm,
       default: prevValues?.isFkRepeated ?? true,
     },
     {
       name: "isProvinceRepeated",
-      message: "Is a parent province's name repeated across sub-tables?",
+      message: `Is a parent province's name repeated across sub-tables?${
+        fmtBool(prevValues?.isProvinceRepeated)
+      }`,
       type: Confirm,
       default: prevValues?.isProvinceRepeated ?? false,
     },
     {
       name: "isProvinceFkRepeated",
-      message: "Is a parent province's foreign key repeated across sub-tables?",
+      message: `Is a parent province's foreign key repeated across sub-tables?${
+        fmtBool(prevValues?.isProvinceFkRepeated)
+      }`,
       type: Confirm,
       default: prevValues?.isProvinceFkRepeated ?? false,
     },
     {
       name: "hasGeojson",
       message:
-        "Do tables include the spatial geometries of their respective ADM boundaries?",
+        `Do tables include the spatial geometries of their respective ADM boundaries?${
+          fmtBool(prevValues?.hasGeojson)
+        }`,
       type: Confirm,
       default: prevValues?.hasGeojson ?? false,
     },
     {
       name: "hasAdmLevel",
-      message: "Do the tables include an adm level index (0 to 4) column?",
+      message: `Do the tables include an adm level index (0 to 4) column?${
+        fmtBool(prevValues?.hasAdmLevel)
+      }`,
       type: Confirm,
       default: prevValues?.hasAdmLevel ?? true,
     },
