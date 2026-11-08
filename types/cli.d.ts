@@ -490,10 +490,6 @@ export type IndexActionCliConfigResolved = {
   inMemoryProcessingHwm: number;
   /** High water mark for the in-memory insert worker. */
   inMemoryInsertHwm: number;
-  /** Interval for worker healthcheck in milliseconds. */
-  workerHealthcheckInterval: number;
-  /** Threshold for claiming pending messages in milliseconds. */
-  workerPendingMinDurationThreshold: number;
   /** Duration in milliseconds for XREAD BLOCK calls in Redis. */
   xreadBlockDuration: number;
   /** Number of concurrent processing workers to spawn per ADM level. */

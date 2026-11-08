@@ -57,6 +57,7 @@ import type {
 import type { GeoJSONFeature } from "@scope/types/utils";
 
 import type { ExtractAdmInputJobContext } from "./extract-adm-input.d.ts";
+import { RedisQueueWorkersMediator } from "@scope/lib/redis-workers-mediators";
 
 type Feature = GeoJSONFeature<{
   shapeName: string;
@@ -99,8 +100,6 @@ const args = parseArgs(Deno.args, {
     "queue-max-retries",
     "in-memory-processing-hwm",
     "in-memory-insert-hwm",
-    "worker-healthcheck-interval",
-    "worker-pending-min-duration-threshold",
     "processing-workers-count",
   ],
   boolean: ["pg.ssl", "disable-redis", "redis.ssl", "debug"],
@@ -338,14 +337,23 @@ try {
       insertStreamKey: "extract-adm:insert:stream",
       processingConsumerGroupName: "extract-adm:processing-group",
       insertConsumerGroupName: "extract-adm:insert-group",
+      processingFailedIdsKey: "extract-adm:processing:failed-ids",
+      insertFailedIdsKey: "extract-adm:insert:failed-ids",
       persistedLastMessageKey: "extract-adm:persisted-last:message",
-      persistedLastInsertMessageKey:
-        "extract-adm:persisted-last-insert:message",
-      processingDlqStreamKey: "extract-adm:processing:dlq",
-      insertDlqStreamKey: "extract-adm:insert:dlq",
-      healthcheckInterval: mediatorCliArgs.workerHealthcheckInterval,
-      pendingMinDurationThreshold:
-        mediatorCliArgs.workerPendingMinDurationThreshold,
+      compareMessages: (v1, v2) => {
+        return v1.properties.shapeID === v2.properties.shapeID &&
+          v1.properties.shapeType === v2.properties.shapeType;
+      },
+      onRetryPendingPrompt: () => {
+        console.log(
+          `⚠️  The processings or the insertions of some ADM territories were not completed. Do you want to retry those tasks?`,
+        );
+        const retry = confirm("Retry?");
+        if (!retry) {
+          Deno.exit(1);
+        }
+        return true;
+      },
       debug: mediatorCliArgs.debug,
     });
     console.log("✅ Redis Queue Workers Mediator initialized.");
@@ -395,7 +403,9 @@ try {
   }
 
   // Handle persisted job context for resuming operations
-  const prevJobContext = await mediator.persistedContext;
+  const prevJobContext = mediator instanceof RedisQueueWorkersMediator
+    ? await mediator.persistedContext
+    : null;
   if (prevJobContext) {
     let shouldClearContext = false;
     if (shouldClearDatabase) {
@@ -415,7 +425,9 @@ try {
 
     if (shouldClearContext) {
       console.log("🧹 Clearing previous job context...");
-      await mediator.clearPersisted();
+      if (mediator instanceof RedisQueueWorkersMediator) {
+        await mediator.clearPersisted();
+      }
     }
   }
 
@@ -535,50 +547,18 @@ try {
     }
 
     // Prepare feature stream with resumption support
-    let featureStream: ReadableStream<Feature>;
-
-    if (await mediator.isJobEnded) {
-      console.log(
-        `   ✅ Level ${levelCode} already completed in previous session. Skipping...`,
-      );
-      featureStream = new ReadableStream({
-        start(controller) {
-          controller.close();
-        },
-      });
-    } else {
-      const lastPersisted = await mediator.persistedLastMessage;
-      let skipping = !!lastPersisted &&
-        (lastPersisted as Feature).properties?.shapeType === levelCode;
-
-      featureStream = (await Deno.open(ndjsonFilePath)).readable
+    const featureStream: ReadableStream<Feature> =
+      (await Deno.open(ndjsonFilePath)).readable
         .pipeThrough(new TextDecoderStream())
         .pipeThrough(new TextLineStream())
         .pipeThrough(
           new TransformStream<string, Feature>({
             transform(chunk, controller) {
               const feature = JSON.parse(chunk) as Feature;
-              if (skipping && lastPersisted) {
-                const last = lastPersisted as Feature;
-                if (
-                  feature.properties.shapeID === last.properties.shapeID &&
-                  feature.properties.shapeType === last.properties.shapeType
-                ) {
-                  console.log(
-                    `   ⏭️  Reached last checkpoint: ${feature.properties.shapeName}. Resuming...`,
-                  );
-                  skipping = false;
-                  // We skip the matched one as it was already inserted
-                  return;
-                }
-                // Still skipping
-                return;
-              }
               controller.enqueue(feature);
             },
           }),
         );
-    }
 
     const admLevelTotalEntriesCount = ADM_LEVEL_ENTRIES_COUNT_BY_CODE.get(
         levelCode,
@@ -705,13 +685,12 @@ try {
     // Cleanup for this level
     for (const w of processingWorkers) w.terminate();
     insertWorker?.terminate();
-    await mediator.clearQueue();
+    if (mediator instanceof RedisQueueWorkersMediator) {
+      await mediator.clearPersisted();
+    }
 
     console.log(`✅ ${levelTitle.toUpperCase()} extraction complete.`);
   }
-
-  // Final Cleanup
-  await mediator.clearPersisted();
 
   console.log("   🧹 Dropping ADM Level tables...");
   await pg.transaction(async (transactionContext) => {

@@ -12,8 +12,6 @@ import {
   DEFAULT_WORKER_JOB_HWM,
 } from "@scope/lib/in-memory-workers-mediators";
 import {
-  DEFAULT_HEALTHCHECK_INTERVAL,
-  DEFAULT_PENDING_MIN_DURATION_THRESHOLD,
   DEFAULT_XREAD_BLOCK_DURATION,
 } from "@scope/lib/redis-workers-mediators";
 import {
@@ -156,10 +154,6 @@ export function resolveIndexCliConfig(
     queueMaxRetries: args.queueMaxRetries ?? DEFAULT_MAX_RETRIES,
     inMemoryProcessingHwm: args.inMemoryProcessingHwm ?? DEFAULT_WORKER_JOB_HWM,
     inMemoryInsertHwm: args.inMemoryInsertHwm ?? DEFAULT_WORKER_JOB_HWM,
-    workerHealthcheckInterval: args.workerHealthcheckInterval ??
-      DEFAULT_HEALTHCHECK_INTERVAL,
-    workerPendingMinDurationThreshold: args.workerPendingMinDurationThreshold ??
-      DEFAULT_PENDING_MIN_DURATION_THRESHOLD,
     xreadBlockDuration: args.xreadBlockDuration ?? DEFAULT_XREAD_BLOCK_DURATION,
     processingWorkersCount: args.processingWorkersCount ??
       DEFAULT_PROCESSING_WORKERS_COUNT,

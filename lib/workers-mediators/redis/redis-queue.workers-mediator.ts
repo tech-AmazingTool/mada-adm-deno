@@ -381,11 +381,11 @@ export class RedisQueueWorkersMediator<
 
       processedMessagesCount = Math.max(
         0,
-        totalCount - procInfo.pending - procInfo.lag,
+        procInfo.length - procInfo.pending - procInfo.lag,
       );
       insertedMessagesCount = Math.max(
         0,
-        totalCount - insInfo.pending - insInfo.lag,
+        insInfo.length - insInfo.pending - insInfo.lag,
       );
       processingStreamIsDone = totalCount > 0 && procInfo.length >= totalCount;
 
@@ -512,19 +512,27 @@ export class RedisQueueWorkersMediator<
         }
       };
 
-      if (Array.isArray(messages)) {
-        for (const msg of messages) {
-          await handleItem(msg);
+      (async () => {
+        if (Array.isArray(messages)) {
+          for (const msg of messages) {
+            await handleItem(msg);
+          }
+        } else {
+          for await (const msg of messages) {
+            await handleItem(msg);
+          }
         }
-      } else {
-        for await (const msg of messages) {
-          await handleItem(msg);
-        }
-      }
 
-      if (currentStreamBatch.length > 0) {
-        await enqueueStreamBatch(currentStreamBatch);
-        currentStreamBatch = [];
+        if (currentStreamBatch.length > 0) {
+          await enqueueStreamBatch(currentStreamBatch);
+          currentStreamBatch = [];
+        }
+      })();
+    } else {
+      if (messages instanceof ReadableStream) {
+        messages.cancel(
+          "Processing stream already completed, skipping remaining messages.",
+        );
       }
     }
 
@@ -1066,9 +1074,8 @@ export class RedisQueueWorkerExecutor<
               processingGroupName,
             );
             const allProcessingMessagesHaveBeenRead = procInfo.lag === 0;
-            const allInsertMessagesAreStreamed =
-              info.length >=
-                (procInfo.length - procInfo.pending - procInfo.lag);
+            const allInsertMessagesAreStreamed = info.length >=
+              (procInfo.length - procInfo.pending - procInfo.lag);
             if (
               allProcessingMessagesHaveBeenRead &&
               allInsertMessagesAreStreamed && allMessagesHaveBeenRead
