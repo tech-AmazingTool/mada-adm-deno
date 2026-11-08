@@ -54,6 +54,7 @@ Deno.test("models.helper", async (t) => {
       is_province_fk_repeated: true,
       has_geojson: false,
       has_adm_level: true,
+      is_active: true,
       created_at: dateStr,
       updated_at: dateStr,
     };
@@ -65,6 +66,7 @@ Deno.test("models.helper", async (t) => {
       isProvinceFkRepeated: true,
       hasGeojson: false,
       hasAdmLevel: true,
+      isActive: true,
       createdAt: dateStr,
       updatedAt: dateStr,
     };

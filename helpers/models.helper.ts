@@ -92,6 +92,7 @@ export function mapMadaAdmConfigSnakeToCamel(
     isProvinceFkRepeated: entity.is_province_fk_repeated,
     hasGeojson: entity.has_geojson,
     hasAdmLevel: entity.has_adm_level,
+    isActive: !!entity.is_active,
     createdAt: parseTimestamp(entity.created_at),
     updatedAt: parseTimestamp(entity.updated_at),
   };
@@ -475,6 +476,7 @@ export function mapMadaAdmConfigBsonToEntity(
   const { _id, createdAt, updatedAt, ...rest } = bson;
   return {
     ...rest,
+    isActive: !!bson.isActive,
     id: _id.toString(),
     createdAt: createdAt?.toISOString(),
     updatedAt: updatedAt?.toISOString(),

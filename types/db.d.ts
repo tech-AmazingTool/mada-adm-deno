@@ -300,7 +300,50 @@ export interface DMLCreateManyResult {
  * Data Manipulation Layer interface for the mada adm config table.
  */
 export interface MadaAdmConfigDML {
+  /**
+   * Retrieves the currently active MadaAdmConfig record.
+   */
   get(): MaybePromise<MadaAdmConfig | null>;
+
+  /**
+   * Retrieves all MadaAdmConfig records.
+   */
+  getAll(): MaybePromise<MadaAdmConfig[]>;
+
+  /**
+   * Inserts a new MadaAdmConfig record.
+   *
+   * @param values - The configuration values.
+   * @param isActive - Whether to set this record as active. Defaults to true.
+   */
+  insert(
+    values: MadaAdmConfigValues,
+    isActive?: boolean,
+  ): MaybePromise<MadaAdmConfig>;
+
+  /**
+   * Updates an existing MadaAdmConfig record by its ID.
+   *
+   * @param id - The ID of the configuration to update.
+   * @param values - The partial configuration values to update.
+   */
+  update(
+    id: EntityId,
+    values: Partial<MadaAdmConfigValues>,
+  ): MaybePromise<MadaAdmConfig>;
+
+  /**
+   * Marks a specific configuration as active, and deactivates all others.
+   *
+   * @param id - The ID of the configuration to activate.
+   */
+  setActive(id: EntityId): MaybePromise<MadaAdmConfig>;
+
+  /**
+   * Creates or updates the Mada ADM configuration.
+   *
+   * @param values - The configuration values.
+   */
   createOrUpdate(values: MadaAdmConfigValues): MaybePromise<MadaAdmConfig>;
 }
 

@@ -67,6 +67,7 @@ export class MadaAdmConfigPostgresDDL implements TableDDL {
         is_province_fk_repeated BOOLEAN NOT NULL DEFAULT FALSE,
         has_geojson BOOLEAN NOT NULL DEFAULT FALSE,
         has_adm_level BOOLEAN NOT NULL DEFAULT TRUE,
+        is_active BOOLEAN NOT NULL DEFAULT FALSE,
         created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
       );
