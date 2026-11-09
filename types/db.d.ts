@@ -340,6 +340,13 @@ export interface MadaAdmConfigDML {
   setActive(id: EntityId): MaybePromise<MadaAdmConfig>;
 
   /**
+   * Deletes a MadaAdmConfig record by its ID.
+   *
+   * @param id - The ID of the configuration to delete.
+   */
+  delete(id: EntityId): MaybePromise<void>;
+
+  /**
    * Creates or updates the Mada ADM configuration.
    *
    * @param values - The configuration values.

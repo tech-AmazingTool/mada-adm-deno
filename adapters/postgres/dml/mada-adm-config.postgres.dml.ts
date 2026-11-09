@@ -236,6 +236,21 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Deletes a MadaAdmConfig record by its ID.
+   */
+  async delete(id: EntityId): Promise<void> {
+    const client = await this.db.pool.connect();
+    try {
+      await client.queryObject(
+        `DELETE FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE id = $1;`,
+        [id],
+      );
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Creates or updates the Mada ADM configuration.
    */
   async createOrUpdate(values: MadaAdmConfigValues): Promise<MadaAdmConfig> {

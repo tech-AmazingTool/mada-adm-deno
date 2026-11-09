@@ -240,6 +240,16 @@ export class MadaAdmConfigMySQLDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Deletes a MadaAdmConfig record by its ID.
+   */
+  async delete(id: EntityId): Promise<void> {
+    await this.db.pool.query(
+      `DELETE FROM ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE id = ?;`,
+      [id],
+    );
+  }
+
+  /**
    * Creates or updates the Mada ADM configuration.
    */
   async createOrUpdate(values: MadaAdmConfigValues): Promise<MadaAdmConfig> {

@@ -158,6 +158,16 @@ export class MadaAdmConfigMongoDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Deletes a Mada ADM configuration record by its ID.
+   *
+   * @param id - The ID of the configuration to delete.
+   */
+  async delete(id: EntityId): Promise<void> {
+    const objectId = new ObjectId(id as string);
+    await this.#collection.deleteOne({ _id: objectId });
+  }
+
+  /**
    * Creates or updates the Mada ADM configuration.
    *
    * @param values - The configuration values to set.

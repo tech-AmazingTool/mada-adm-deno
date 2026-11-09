@@ -2,7 +2,7 @@
   "nodeModulesDir": "auto",
   "tasks": {
     "cli": "deno -E --env -N -R -W --allow-ffi -S commands/index.ts",
-    "cli:set-config": "deno -E --env -N -R -W --allow-ffi -S commands/index.ts set-config",
+    "cli:manage-config": "deno -E --env -N -R -W --allow-ffi -S commands/index.ts manage-config",
     "cli:update-field": "deno -E --env -N -R -W --allow-ffi -S commands/index.ts update-field",
     "cli:clear": "deno -E --env -N -R -W --allow-ffi -S commands/index.ts clear",
     "cli:query": "deno -E --env -N -R -W --allow-ffi -S commands/index.ts query",

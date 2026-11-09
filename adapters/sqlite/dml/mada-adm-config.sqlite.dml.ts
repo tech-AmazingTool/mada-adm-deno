@@ -214,6 +214,16 @@ export class MadaAdmConfigSqliteDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Deletes a MadaAdmConfig record by its ID.
+   */
+  delete(id: EntityId): MaybePromise<void> {
+    const stmt = this.#db.client.prepare(
+      `DELETE FROM ${this.#tableName} WHERE id = ?`,
+    );
+    stmt.run(Number(id));
+  }
+
+  /**
    * Creates or updates the Mada ADM configuration.
    */
   createOrUpdate(values: MadaAdmConfigValues): MaybePromise<MadaAdmConfig> {
