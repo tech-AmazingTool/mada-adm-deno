@@ -6,6 +6,7 @@ import {
   MANAGE_CONFIGS_COMMAND_DESCRIPTION,
   MANAGE_CONFIGS_COMMAND_NAME,
 } from "@scope/consts/cli";
+import type { DbType } from "@scope/consts/db";
 import { DDL_TRANSACTION_OPTIONS } from "@scope/consts/db";
 import {
   injectCommunesDDL,
@@ -27,12 +28,14 @@ import {
   promptMadaAdmConfig,
   resolveCommonGlobalCliConfig,
 } from "@scope/helpers/cli";
+import { compareMadaAdmConfigValues } from "@scope/helpers/models";
 import type { GlobalCliConfig } from "@scope/types/cli";
 import type { DbConnection } from "@scope/types/db";
 import type {
   EntityId,
   MadaAdmConfig,
   MadaAdmConfigValues,
+  Nullable,
 } from "@scope/types/models";
 
 /**
@@ -40,7 +43,7 @@ import type {
  * in the database (creating, updating, switching active, or deleting), and
  * optionally rebuilds the ADM tables when the active configuration changes.
  */
-export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
+export class CliManageConfigCommand extends Command<GlobalCliConfig, void> {
   /**
    * Initializes the manage-config sub-command with its name, description, and
    * interactive action handler.
@@ -52,16 +55,57 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
       .description(MANAGE_CONFIGS_COMMAND_DESCRIPTION)
       .action(async (options) => {
         try {
-          await this.handleManageConfigs(options);
+          await this.handleManageConfig(options);
         } catch (error) {
           console.error(
-            `\n${colors.red("❌ Error:")} ${
+            `${colors.red("❌ Error:")} ${
               error instanceof Error ? error.message : String(error)
-            }`,
+            }\n`,
           );
           Deno.exit(1);
         }
       });
+  }
+
+  /**
+   * Checks whether all ADM tables exist for the specified configuration.
+   *
+   * @param config - The Mada ADM configuration to check tables for.
+   * @param dbType - The active database type.
+   * @param db - The active database connection.
+   * @param pgSchema - Optional PostgreSQL schema name.
+   * @returns True if all ADM tables exist, false otherwise.
+   */
+  private async checkAdmTablesExist(
+    config: MadaAdmConfigValues,
+    dbType: DbType,
+    db: DbConnection,
+    pgSchema?: string,
+  ): Promise<boolean> {
+    const ddlOptions = pgSchema ? { pgSchema } : undefined;
+    const provincesDDL = injectProvincesDDL(config, dbType, db, ddlOptions);
+    const regionsDDL = injectRegionsDDL(config, dbType, db, ddlOptions);
+    const districtsDDL = injectDistrictsDDL(config, dbType, db, ddlOptions);
+    const communesDDL = injectCommunesDDL(config, dbType, db, ddlOptions);
+    const fokontanysDDL = injectFokontanysDDL(config, dbType, db, ddlOptions);
+
+    const exists = (
+      await Promise.all([
+        provincesDDL.exists(),
+        regionsDDL.exists(),
+        districtsDDL.exists(),
+        communesDDL.exists(),
+        fokontanysDDL.exists(),
+      ])
+    ).every((e) => e);
+
+    resetProvincesDDL(dbType);
+    resetRegionsDDL(dbType);
+    resetDistrictsDDL(dbType);
+    resetCommunesDDL(dbType);
+    resetFokontanysDDL(dbType);
+
+    return exists;
   }
 
   /**
@@ -70,7 +114,7 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
    *
    * @param options - The globally resolved CLI configuration.
    */
-  private async handleManageConfigs(options: GlobalCliConfig): Promise<void> {
+  private async handleManageConfig(options: GlobalCliConfig): Promise<void> {
     let db!: DbConnection;
 
     try {
@@ -91,6 +135,26 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
       }
 
       const prevActiveConfig = await madaAdmConfigDML.get();
+      const prevTablesExist = prevActiveConfig
+        ? await this.checkAdmTablesExist(prevActiveConfig, dbType, db, pgSchema)
+        : false;
+
+      const shouldWarnSamePrefixTableDeletion = (
+        candidatePrefix: Nullable<string>,
+      ) =>
+        prevActiveConfig !== null &&
+        prevTablesExist &&
+        prevActiveConfig.tablesPrefix === candidatePrefix;
+
+      const logSamePrefixDeletionNotice = (prefix: Nullable<string>) => {
+        const prefixDisplay = prefix !== null ? `"${prefix}"` : "None";
+        console.log(
+          colors.yellow(
+            `⚠️  Notice: Setting this configuration as active will delete the existing ADM tables with prefix ${prefixDisplay}.\n`,
+          ),
+        );
+      };
+
       let allConfigs = await madaAdmConfigDML.getAll();
       let newActiveConfig: MadaAdmConfig | null = prevActiveConfig;
       let activeChanged = false;
@@ -104,6 +168,7 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
         const result = await promptMadaAdmConfig();
         const rawTablesPrefix = (result.tablesPrefix as string) ?? "";
         const tablesPrefix = rawTablesPrefix.trim() || null;
+        console.log();
         const configToInsert: MadaAdmConfigValues = {
           tablesPrefix,
           isFkRepeated: result.isFkRepeated as boolean,
@@ -116,10 +181,11 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
         newActiveConfig = inserted;
         activeChanged = true;
         displayMadaAdmConfig("Active Mada ADM Configuration", inserted);
+        console.log();
       } else {
         console.log(
           colors.blue(
-            `\nFound ${allConfigs.length} existing Mada ADM configuration(s):`,
+            `Found ${allConfigs.length} existing Mada ADM configuration(s):`,
           ),
         );
         const configIdByChoiceNumber = new Map<number, EntityId>();
@@ -131,14 +197,21 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
         }
         console.log();
 
-        const actionOptions = [
+        const actionOptions: Record<"name" | "value", string>[] = [
           { name: "Create a new configuration", value: "create" },
-          {
-            name: "Update an existing configuration",
-            value: "update",
-          },
-          { name: "Switch active configuration", value: "switch" },
         ];
+        if (allConfigs.length > 0) {
+          actionOptions.push(
+            {
+              name: "Update an existing configuration",
+              value: "update",
+            },
+            {
+              name: "Switch active configuration",
+              value: "switch",
+            },
+          );
+        }
         if (allConfigs.length > 1) {
           actionOptions.push({
             name: "Delete a configuration",
@@ -161,11 +234,7 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
           const result = await promptMadaAdmConfig();
           const rawTablesPrefix = (result.tablesPrefix as string) ?? "";
           const tablesPrefix = rawTablesPrefix.trim() || null;
-
-          const setActive = await Confirm.prompt({
-            message: "Set as active configuration?",
-            default: true,
-          });
+          console.log();
 
           const configToInsert: MadaAdmConfigValues = {
             tablesPrefix,
@@ -176,21 +245,92 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
             hasAdmLevel: result.hasAdmLevel as boolean,
           };
 
-          const inserted = await madaAdmConfigDML.insert(
-            configToInsert,
-            setActive,
+          const existingIndex = allConfigs.findIndex((c) =>
+            compareMadaAdmConfigValues(configToInsert, c)
           );
-          console.log(
-            colors.green.bold(
-              `\n✅ New Mada ADM configuration created successfully.`,
-            ),
-          );
-          displayMadaAdmConfig("Created Mada ADM Configuration", inserted);
-          console.log();
 
-          if (setActive) {
-            newActiveConfig = inserted;
-            activeChanged = true;
+          if (existingIndex !== -1) {
+            const existingSameConfig = allConfigs[existingIndex];
+            const existingNum = existingIndex + 1;
+            console.log(
+              colors.yellow(
+                `ℹ️  Found an identical existing configuration (#${existingNum}). Reused the existing configuration instead of inserting a duplicate.`,
+              ),
+            );
+
+            if (existingSameConfig.isActive) {
+              displayMadaAdmConfig(
+                "Active Mada ADM Configuration",
+                existingSameConfig,
+              );
+              console.log();
+              newActiveConfig = existingSameConfig;
+            } else {
+              if (
+                shouldWarnSamePrefixTableDeletion(
+                  existingSameConfig.tablesPrefix,
+                )
+              ) {
+                logSamePrefixDeletionNotice(existingSameConfig.tablesPrefix);
+              }
+              const setActive = await Confirm.prompt({
+                message: "Set as active configuration?",
+                default: true,
+              });
+              console.log();
+
+              if (setActive) {
+                const activated = await madaAdmConfigDML.setActive(
+                  existingSameConfig.id,
+                );
+                console.log(
+                  colors.green.bold(
+                    `✅ Activated configuration #${existingNum} successfully.\n`,
+                  ),
+                );
+                displayMadaAdmConfig(
+                  "Active Mada ADM Configuration",
+                  activated,
+                );
+                console.log();
+                newActiveConfig = activated;
+                activeChanged = true;
+              } else {
+                displayMadaAdmConfig(
+                  "Mada ADM Configuration",
+                  existingSameConfig,
+                );
+                console.log();
+              }
+            }
+          } else {
+            if (
+              shouldWarnSamePrefixTableDeletion(configToInsert.tablesPrefix)
+            ) {
+              logSamePrefixDeletionNotice(configToInsert.tablesPrefix);
+            }
+            const setActive = await Confirm.prompt({
+              message: "Set as active configuration?",
+              default: true,
+            });
+            console.log();
+
+            const inserted = await madaAdmConfigDML.insert(
+              configToInsert,
+              setActive,
+            );
+            console.log(
+              colors.green.bold(
+                `✅ New Mada ADM configuration created successfully.\n`,
+              ),
+            );
+            displayMadaAdmConfig("Created Mada ADM Configuration", inserted);
+            console.log();
+
+            if (setActive) {
+              newActiveConfig = inserted;
+              activeChanged = true;
+            }
           }
         } else if (actionChoice === "update") {
           const chosenNumStr = await Select.prompt({
@@ -213,42 +353,169 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
           const tablesPrefix = rawTablesPrefix.trim() || null;
           console.log();
 
-          let shouldActivate = targetConfig.isActive;
-          if (!targetConfig.isActive) {
-            shouldActivate = await Confirm.prompt({
-              message: "Set this configuration as active?",
-              default: false,
-            });
-            console.log();
-          }
-
-          const configToUpdate: Partial<MadaAdmConfigValues> = {
+          const newValues: MadaAdmConfigValues = {
             tablesPrefix,
             isFkRepeated: result.isFkRepeated as boolean,
             isProvinceRepeated: result.isProvinceRepeated as boolean,
             isProvinceFkRepeated: result.isProvinceFkRepeated as boolean,
             hasGeojson: result.hasGeojson as boolean,
             hasAdmLevel: result.hasAdmLevel as boolean,
-            isActive: shouldActivate,
           };
 
-          const updated = await madaAdmConfigDML.update(
-            targetConfig.id,
-            configToUpdate,
+          const duplicateIndex = allConfigs.findIndex(
+            (c) =>
+              c.id !== targetConfig.id &&
+              compareMadaAdmConfigValues(newValues, c),
           );
-          console.log(
-            colors.green.bold(
-              `✅ Mada ADM configuration updated successfully.`,
-            ),
-          );
-          displayMadaAdmConfig("Updated Mada ADM Configuration", updated);
-          console.log();
 
-          if (shouldActivate) {
-            newActiveConfig = updated;
-            activeChanged = true;
+          if (duplicateIndex !== -1) {
+            const existingSameConfig = allConfigs[duplicateIndex];
+            const existingNum = duplicateIndex + 1;
+            console.log(
+              colors.yellow(
+                `⚠️  An identical Mada ADM configuration (#${existingNum}) already exists in the database.\nIf you decide to proceed, the currently edited configuration will be deleted to prevent duplicates.`,
+              ),
+            );
+
+            const shouldProceed = await Confirm.prompt({
+              message: "Do you want to proceed?",
+              default: false,
+            });
+            console.log();
+
+            if (!shouldProceed) {
+              console.log(
+                colors.gray(
+                  `ℹ️  Update cancelled. Configuration was not modified.\n`,
+                ),
+              );
+            } else {
+              await madaAdmConfigDML.delete(targetConfig.id);
+              console.log(
+                colors.yellow(
+                  `🗑️  Deleted duplicate configuration #${chosenNumStr}.`,
+                ),
+              );
+
+              if (targetConfig.isActive) {
+                console.log();
+                const activated = await madaAdmConfigDML.setActive(
+                  existingSameConfig.id,
+                );
+                console.log(
+                  colors.green.bold(
+                    `✅ Set existing identical configuration #${existingNum} as active.`,
+                  ),
+                );
+                displayMadaAdmConfig(
+                  "Active Mada ADM Configuration",
+                  activated,
+                );
+                console.log();
+                newActiveConfig = activated;
+                activeChanged = true;
+              } else {
+                if (existingSameConfig.isActive) {
+                  displayMadaAdmConfig(
+                    "Active Mada ADM Configuration",
+                    existingSameConfig,
+                  );
+                  console.log();
+                  newActiveConfig = existingSameConfig;
+                } else {
+                  if (
+                    shouldWarnSamePrefixTableDeletion(
+                      existingSameConfig.tablesPrefix,
+                    )
+                  ) {
+                    logSamePrefixDeletionNotice(
+                      existingSameConfig.tablesPrefix,
+                    );
+                  }
+                  const shouldActivate = await Confirm.prompt({
+                    message: "Set this configuration as active?",
+                    default: false,
+                  });
+                  console.log();
+
+                  if (shouldActivate) {
+                    const activated = await madaAdmConfigDML.setActive(
+                      existingSameConfig.id,
+                    );
+                    console.log(
+                      colors.green.bold(
+                        `✅ Set existing identical configuration #${existingNum} as active.\n`,
+                      ),
+                    );
+                    displayMadaAdmConfig(
+                      "Active Mada ADM Configuration",
+                      activated,
+                    );
+                    console.log();
+                    newActiveConfig = activated;
+                    activeChanged = true;
+                  } else {
+                    displayMadaAdmConfig(
+                      "Mada ADM Configuration",
+                      existingSameConfig,
+                    );
+                    console.log();
+                  }
+                }
+              }
+            }
+          } else {
+            let shouldActivate = targetConfig.isActive;
+            if (!targetConfig.isActive) {
+              if (shouldWarnSamePrefixTableDeletion(newValues.tablesPrefix)) {
+                logSamePrefixDeletionNotice(newValues.tablesPrefix);
+              }
+              shouldActivate = await Confirm.prompt({
+                message: "Set this configuration as active?",
+                default: false,
+              });
+              console.log();
+            }
+
+            const configToUpdate: Partial<MadaAdmConfigValues> = {
+              ...newValues,
+              isActive: shouldActivate,
+            };
+
+            const updated = await madaAdmConfigDML.update(
+              targetConfig.id,
+              configToUpdate,
+            );
+            console.log(
+              colors.green.bold(
+                `✅ Mada ADM configuration updated successfully.`,
+              ),
+            );
+            displayMadaAdmConfig("Updated Mada ADM Configuration", updated);
+            console.log();
+
+            if (shouldActivate) {
+              newActiveConfig = updated;
+              activeChanged = true;
+            }
           }
         } else if (actionChoice === "switch") {
+          if (
+            prevActiveConfig &&
+            prevTablesExist &&
+            allConfigs.some((c) =>
+              !c.isActive && c.tablesPrefix === prevActiveConfig.tablesPrefix
+            )
+          ) {
+            const prefixDisplay = prevActiveConfig.tablesPrefix !== null
+              ? `"${prevActiveConfig.tablesPrefix}"`
+              : "None";
+            console.log(
+              colors.yellow(
+                `⚠️  Notice: Activating a configuration with the same tables prefix (${prefixDisplay}) will delete the existing ADM tables.`,
+              ),
+            );
+          }
           const chosenNumStr = await Select.prompt({
             message: "Select an ADM configuration to activate:",
             options: allConfigs.map((_, i) => String(i + 1)),
@@ -277,15 +544,14 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
             Number(chosenNumStr),
           )!;
           const targetConfig = allConfigs.find((c) => c.id === targetConfigId)!;
+          console.log();
 
           await madaAdmConfigDML.delete(targetConfigId);
-          console.log();
           console.log(
             colors.green.bold(
-              `✅ Configuration deleted successfully.`,
+              `✅ Configuration deleted successfully.\n`,
             ),
           );
-          console.log();
 
           if (targetConfig.isActive) {
             allConfigs = await madaAdmConfigDML.getAll();
@@ -302,6 +568,7 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
                 "Active Mada ADM Configuration",
                 remainingActivated,
               );
+              console.log();
               newActiveConfig = remainingActivated;
               activeChanged = true;
             } else if (allConfigs.length > 1) {
@@ -317,6 +584,21 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
                 displayMadaAdmConfig(`${num}.`, allConfigs[i]);
               }
               console.log();
+              if (
+                prevTablesExist &&
+                allConfigs.some((c) =>
+                  c.tablesPrefix === targetConfig.tablesPrefix
+                )
+              ) {
+                const prefixDisplay = targetConfig.tablesPrefix !== null
+                  ? `"${targetConfig.tablesPrefix}"`
+                  : "None";
+                console.log(
+                  colors.yellow(
+                    `⚠️  Notice: Activating a configuration with the same tables prefix (${prefixDisplay}) will delete the existing ADM tables.`,
+                  ),
+                );
+              }
               const newActiveNumStr = await Select.prompt({
                 message: "Select configuration to activate:",
                 options: allConfigs.map((_, i) => String(i + 1)),
@@ -334,6 +616,7 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
                 ),
               );
               displayMadaAdmConfig("Active Mada ADM Configuration", activated);
+              console.log();
               newActiveConfig = activated;
               activeChanged = true;
             }
@@ -381,7 +664,7 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
             { pgSchema },
           );
 
-          const prevTablesExist = (
+          const currentPrevTablesExist = (
             await Promise.all([
               prevProvincesDDL.exists(),
               prevRegionsDDL.exists(),
@@ -391,47 +674,38 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
             ])
           ).every((exists) => exists);
 
-          if (prevTablesExist) {
+          if (currentPrevTablesExist) {
             if (isSamePrefix) {
-              const shouldClearAndRecreate = await Confirm.prompt({
-                message:
-                  "Clear the ADM tables built with the previous configuration and create new ones according to the new configuration?",
-                default: false,
-              });
+              console.log(
+                colors.yellow(
+                  `🗑️  Dropping ADM tables built with the previous configuration...`,
+                ),
+              );
+              await db.transaction(async (txCtx) => {
+                for (
+                  const ddl of [
+                    prevFokontanysDDL,
+                    prevCommunesDDL,
+                    prevDistrictsDDL,
+                    prevRegionsDDL,
+                    prevProvincesDDL,
+                  ]
+                ) {
+                  console.log(`   Dropping the ${ddl.tableName} table ...`);
+                  await ddl.drop(txCtx);
+                }
+              }, DDL_TRANSACTION_OPTIONS);
               console.log();
-
-              if (shouldClearAndRecreate) {
-                console.log(
-                  colors.yellow(
-                    `🗑️  Dropping ADM tables built with the previous configuration...`,
-                  ),
-                );
-                await db.transaction(async (txCtx) => {
-                  for (
-                    const ddl of [
-                      prevFokontanysDDL,
-                      prevCommunesDDL,
-                      prevDistrictsDDL,
-                      prevRegionsDDL,
-                      prevProvincesDDL,
-                    ]
-                  ) {
-                    console.log(`   Dropping the ${ddl.tableName} table ...`);
-                    await ddl.drop(txCtx);
-                  }
-                }, DDL_TRANSACTION_OPTIONS);
-                console.log();
-                console.log(
-                  colors.green(`✅ Old ADM tables dropped successfully.`),
-                );
-                previousTablesDropped = true;
-                shouldRecreateTargetTables = true;
-              }
+              console.log(
+                colors.green(`✅ Old ADM tables dropped successfully.\n`),
+              );
+              previousTablesDropped = true;
+              shouldRecreateTargetTables = true;
             } else {
               const prevPrefixDisplay = prevActiveConfig.tablesPrefix ?? "None";
               const shouldDropOld = await Confirm.prompt({
                 message:
-                  `Clear the ADM tables built with the previous configuration (Tables prefix: "${prevPrefixDisplay}")?`,
+                  `Clear the ADM tables built with the previous active configuration (Tables prefix: "${prevPrefixDisplay}")?`,
                 default: false,
               });
               console.log();
@@ -458,9 +732,8 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
                 }, DDL_TRANSACTION_OPTIONS);
                 console.log();
                 console.log(
-                  colors.green(`✅ Old ADM tables dropped successfully.`),
+                  colors.green(`✅ Old ADM tables dropped successfully.\n`),
                 );
-                console.log();
                 previousTablesDropped = true;
               }
             }
@@ -516,9 +789,14 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
 
           if (targetTablesExist && !previousTablesDropped) {
             const newPrefixDisplay = newActiveConfig.tablesPrefix ?? "None";
+            console.log(
+              colors.yellow(
+                `⚠️  Tables with the new configuration (Tables prefix: "${newPrefixDisplay}") already exist.`,
+              ),
+            );
             const shouldDropAndRecreateTarget = await Confirm.prompt({
               message:
-                `Tables with the new configuration (Tables prefix: "${newPrefixDisplay}") already exist. Would you like to clear them and recreate them according to the new configuration?`,
+                `Would you like to clear them and recreate them according to the new configuration?`,
               default: false,
             });
             console.log();
@@ -544,9 +822,10 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
               }, DDL_TRANSACTION_OPTIONS);
               console.log();
               console.log(
-                colors.green(`✅ Existing target tables dropped successfully.`),
+                colors.green(
+                  `✅ Existing target tables dropped successfully.\n`,
+                ),
               );
-              console.log();
               shouldRecreateTargetTables = true;
             }
           } else if (!targetTablesExist) {
@@ -569,14 +848,14 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
                   newFokontanysDDL,
                 ]
               ) {
+                console.log(`   Creating the ${ddl.tableName} table ...`);
                 await ddl.create(txCtx);
               }
             });
             console.log();
             console.log(
-              colors.bold.green(`✅ New ADM tables created successfully.`),
+              colors.bold.green(`✅ New ADM tables created successfully.\n`),
             );
-            console.log();
           }
         }
       }
@@ -593,13 +872,13 @@ export class CliManageConfigsCommand extends Command<GlobalCliConfig, void> {
   }
 }
 
-let _command: CliManageConfigsCommand | null = null;
+let _command: CliManageConfigCommand | null = null;
 
 /**
- * Returns the singleton instance of {@link CliManageConfigsCommand},
+ * Returns the singleton instance of {@link CliManageConfigCommand},
  * creating it on first call.
  */
-export function injectCliManageConfigsCommand(): CliManageConfigsCommand {
-  if (!_command) _command = new CliManageConfigsCommand();
+export function injectCliManageConfigCommand(): CliManageConfigCommand {
+  if (!_command) _command = new CliManageConfigCommand();
   return _command;
 }

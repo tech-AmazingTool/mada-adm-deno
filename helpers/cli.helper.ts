@@ -220,17 +220,29 @@ export async function promptMadaAdmConfig(
   prevValues?: Partial<MadaAdmConfigValues>,
 ): Promise<MadaAdmConfigValues> {
   const hasPrev = prevValues !== undefined;
-  const fmtBool = (val?: boolean) =>
-    hasPrev ? ` (Current: "${val ? "Yes" : "No"}")` : "";
-  const fmtStr = (val?: string | null) =>
-    hasPrev ? ` (Current: "${val ?? ""}")` : "";
+  const fmtBool = (val?: boolean) => {
+    return hasPrev
+      ? ` (Current: ${val ? colors.green("Yes") : colors.red("No")})`
+      : "";
+  };
+  const fmtStr = (val?: string | null) => {
+    return hasPrev
+      ? ` (Current: ${
+        val ? colors.green('"' + val + '"') : colors.gray("None")
+      })`
+      : "";
+  };
 
+  const tablesPrefixNoneValueIndicator = prevValues
+    ? `whitespace ${colors.gray('" "')}`
+    : "empty";
   const result = await prompt([
     {
       name: "tablesPrefix",
-      message: `Tables Prefix (leave empty for none)${
-        fmtStr(prevValues?.tablesPrefix)
-      }:`,
+      message:
+        `Tables Prefix (leave ${tablesPrefixNoneValueIndicator} for none)${
+          fmtStr(prevValues?.tablesPrefix)
+        }:`,
       type: Input,
       default: prevValues?.tablesPrefix ?? "",
     },

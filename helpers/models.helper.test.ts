@@ -17,6 +17,7 @@ import type {
 
 import {
   compareAdmValues,
+  compareMadaAdmConfigValues,
   encodeCommuneAttributes,
   getAdmValuesEncodedString,
   isCommuneValues,
@@ -459,5 +460,59 @@ Deno.test("models.helper", async (t) => {
     // Null/Undefined
     assertEquals(parseTimestamp(undefined), undefined);
     assertEquals(parseTimestamp(null as any), undefined);
+  });
+
+  await t.step("compareMadaAdmConfigValues", () => {
+    const base = {
+      tablesPrefix: "test_",
+      isFkRepeated: true,
+      isProvinceRepeated: false,
+      isProvinceFkRepeated: true,
+      hasGeojson: false,
+      hasAdmLevel: true,
+      isActive: true,
+    };
+
+    // Identical attributes, different isActive
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, isActive: false }),
+      true,
+    );
+
+    // Identical attributes, same isActive
+    assertEquals(compareMadaAdmConfigValues(base, { ...base }), true);
+
+    // Differences in each field
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, tablesPrefix: "other_" }),
+      false,
+    );
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, tablesPrefix: null }),
+      false,
+    );
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, isFkRepeated: false }),
+      false,
+    );
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, isProvinceRepeated: true }),
+      false,
+    );
+    assertEquals(
+      compareMadaAdmConfigValues(base, {
+        ...base,
+        isProvinceFkRepeated: false,
+      }),
+      false,
+    );
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, hasGeojson: true }),
+      false,
+    );
+    assertEquals(
+      compareMadaAdmConfigValues(base, { ...base, hasAdmLevel: false }),
+      false,
+    );
   });
 });
