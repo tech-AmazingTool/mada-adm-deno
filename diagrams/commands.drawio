@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36" version="29.6.6" pages="3">
   <diagram id="yL5EnMFvI3E-e0E_J0zN" name="index">
-    <mxGraphModel dx="13190" dy="11840" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="-3862" dy="1339" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -1318,13 +1318,16 @@
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-16" connectable="0" parent="ITrD8njbIXnmhw6uko3N-15" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="no" vertex="1">
           <mxGeometry relative="1" x="-0.1964" as="geometry">
-            <mxPoint as="offset" />
+            <mxPoint y="-12" as="offset" />
           </mxGeometry>
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-7" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="prevJobContext&lt;div&gt;exists&lt;/div&gt;" vertex="1">
           <mxGeometry height="120" width="120" x="6820.04" y="8860" as="geometry" />
         </mxCell>
-        <mxCell id="ITrD8njbIXnmhw6uko3N-14" edge="1" parent="1" source="ITrD8njbIXnmhw6uko3N-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="ITrD8njbIXnmhw6uko3N-13">
+        <mxCell id="ITrD8njbIXnmhw6uko3N-14" edge="1" parent="1" source="LHy-L4RTE-sC8t5QqJMY-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="ITrD8njbIXnmhw6uko3N-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LHy-L4RTE-sC8t5QqJMY-3" edge="1" parent="1" source="ITrD8njbIXnmhw6uko3N-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="LHy-L4RTE-sC8t5QqJMY-1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-10" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="Clear the job context from Redis" vertex="1">
@@ -1334,7 +1337,7 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-13" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
-          <mxGeometry height="40" width="40" x="6860.04" y="9080" as="geometry" />
+          <mxGeometry height="40" width="40" x="6860.04" y="9160" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-18" edge="1" parent="1" source="ITrD8njbIXnmhw6uko3N-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="ITrD8njbIXnmhw6uko3N-17" value="">
           <mxGeometry relative="1" as="geometry">
@@ -1391,22 +1394,25 @@
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-29" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
-          <mxGeometry height="40" width="40" x="7100" y="9160" as="geometry" />
+          <mxGeometry height="40" width="40" x="7100" y="9240" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-36" edge="1" parent="1" source="ITrD8njbIXnmhw6uko3N-33" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="ITrD8njbIXnmhw6uko3N-35">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-33" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="... pick up the rest of the job" vertex="1">
-          <mxGeometry height="40" width="200" x="7020" y="9240" as="geometry" />
+          <mxGeometry height="40" width="200" x="7020" y="9320" as="geometry" />
         </mxCell>
         <mxCell id="r11I33NAwvkYco7i3cDO-2" edge="1" parent="1" source="ITrD8njbIXnmhw6uko3N-35" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="r11I33NAwvkYco7i3cDO-1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="ITrD8njbIXnmhw6uko3N-35" parent="1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;" value="" vertex="1">
-          <mxGeometry height="40" width="40" x="7300" y="9320" as="geometry" />
+          <mxGeometry height="40" width="40" x="7300" y="9400" as="geometry" />
         </mxCell>
         <mxCell id="r11I33NAwvkYco7i3cDO-1" parent="1" style="shape=umlDestroy;whiteSpace=wrap;html=1;strokeWidth=3;targetShapes=umlLifeline;" value="" vertex="1">
-          <mxGeometry height="30" width="30" x="7305" y="9450" as="geometry" />
+          <mxGeometry height="30" width="30" x="7305" y="9530" as="geometry" />
+        </mxCell>
+        <mxCell id="LHy-L4RTE-sC8t5QqJMY-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="prevJobContext := null" vertex="1">
+          <mxGeometry height="40" width="160" x="6640" y="9080" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
