@@ -174,7 +174,7 @@ export function displayMadaAdmConfig(
     [
       "Tables prefix",
       values.tablesPrefix
-        ? colors.green(values.tablesPrefix)
+        ? colors.green(`"${values.tablesPrefix}"`)
         : colors.gray("None"),
     ],
     [
@@ -206,7 +206,7 @@ export function displayMadaAdmConfig(
       ]
       : []),
   );
-  console.log(colors.blue(`\n⚙️  ${title}:`));
+  console.log(colors.blue(`⚙️  ${title}:`));
   console.log(table.toString());
 }
 

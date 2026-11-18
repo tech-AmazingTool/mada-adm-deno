@@ -1,6 +1,6 @@
 import { MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED } from "@scope/consts/db";
 import { ensureIsPostgresDbTransactionCtx } from "@scope/helpers/db";
-import type { MadaAdmConfigDML } from "@scope/types/db";
+import type { DbTransactionContext, MadaAdmConfigDML } from "@scope/types/db";
 import type {
   EntityId,
   MadaAdmConfig,
@@ -37,10 +37,33 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
 
   /**
    * Retrieves the currently active MadaAdmConfig record from the database.
+   *
+   * @param transactionContext - Optional database transaction context.
    */
-  async get(): Promise<MadaAdmConfig | null> {
+  async get(
+    transactionContext?: DbTransactionContext,
+  ): Promise<MadaAdmConfig | null> {
     const query =
       `SELECT * FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE is_active = TRUE LIMIT 1;`;
+    if (transactionContext) {
+      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+        throw new Error("Invalid Postgres transaction context.");
+      }
+      const result = await transactionContext.tx.queryObject<
+        MadaAdmConfigSnakeCased
+      >(query);
+      let row = result.rows[0];
+      if (!row) {
+        const fallbackQuery =
+          `SELECT * FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} ORDER BY id DESC LIMIT 1;`;
+        const fallbackResult = await transactionContext.tx.queryObject<
+          MadaAdmConfigSnakeCased
+        >(fallbackQuery);
+        row = fallbackResult.rows[0];
+      }
+      return row ? this._mapRowToConfig(row) : null;
+    }
+
     const client = await this.db.pool.connect();
     try {
       const result = await client.queryObject<MadaAdmConfigSnakeCased>(query);
@@ -62,10 +85,24 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
 
   /**
    * Retrieves all MadaAdmConfig records.
+   *
+   * @param transactionContext - Optional database transaction context.
    */
-  async getAll(): Promise<MadaAdmConfig[]> {
+  async getAll(
+    transactionContext?: DbTransactionContext,
+  ): Promise<MadaAdmConfig[]> {
     const query =
       `SELECT * FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} ORDER BY id ASC;`;
+    if (transactionContext) {
+      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+        throw new Error("Invalid Postgres transaction context.");
+      }
+      const result = await transactionContext.tx.queryObject<
+        MadaAdmConfigSnakeCased
+      >(query);
+      return result.rows.map((row) => this._mapRowToConfig(row));
+    }
+
     const client = await this.db.pool.connect();
     try {
       const result = await client.queryObject<MadaAdmConfigSnakeCased>(query);
@@ -76,17 +113,92 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Retrieves an exact matching MadaAdmConfig record by its configuration values.
+   *
+   * @param values - The configuration values to match.
+   * @param transactionContext - Optional database transaction context.
+   */
+  async getExact(
+    values: MadaAdmConfigValues,
+    transactionContext?: DbTransactionContext,
+  ): Promise<MadaAdmConfig | null> {
+    const isPrefixNull = values.tablesPrefix === null ||
+      values.tablesPrefix === undefined;
+    const query = isPrefixNull
+      ? `SELECT * FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED}
+         WHERE tables_prefix IS NULL
+           AND is_fk_repeated = $1
+           AND is_province_repeated = $2
+           AND is_province_fk_repeated = $3
+           AND has_geojson = $4
+           AND has_adm_level = $5
+         LIMIT 1;`
+      : `SELECT * FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED}
+         WHERE tables_prefix = $1
+           AND is_fk_repeated = $2
+           AND is_province_repeated = $3
+           AND is_province_fk_repeated = $4
+           AND has_geojson = $5
+           AND has_adm_level = $6
+         LIMIT 1;`;
+    const params = isPrefixNull
+      ? [
+        values.isFkRepeated,
+        values.isProvinceRepeated,
+        values.isProvinceFkRepeated,
+        values.hasGeojson,
+        values.hasAdmLevel,
+      ]
+      : [
+        values.tablesPrefix,
+        values.isFkRepeated,
+        values.isProvinceRepeated,
+        values.isProvinceFkRepeated,
+        values.hasGeojson,
+        values.hasAdmLevel,
+      ];
+
+    if (transactionContext) {
+      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+        throw new Error("Invalid Postgres transaction context.");
+      }
+      const result = await transactionContext.tx.queryObject<
+        MadaAdmConfigSnakeCased
+      >(query, params);
+      const row = result.rows[0];
+      return row ? this._mapRowToConfig(row) : null;
+    }
+
+    const client = await this.db.pool.connect();
+    try {
+      const result = await client.queryObject<MadaAdmConfigSnakeCased>(
+        query,
+        params,
+      );
+      const row = result.rows[0];
+      return row ? this._mapRowToConfig(row) : null;
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
    * Inserts a new MadaAdmConfig record.
+   *
+   * @param values - The configuration values.
+   * @param isActive - Whether to set this record as active. Defaults to true.
+   * @param transactionContext - Optional database transaction context.
    */
   async insert(
     values: MadaAdmConfigValues,
     isActive = true,
+    transactionContext?: DbTransactionContext,
   ): Promise<MadaAdmConfig> {
-    return await this.db.transaction(async (transactionContext) => {
-      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+    const run = async (txCtx: DbTransactionContext) => {
+      if (!ensureIsPostgresDbTransactionCtx(txCtx)) {
         throw new Error("This method can only be called within a transaction.");
       }
-      const tx = transactionContext.tx;
+      const tx = txCtx.tx;
       if (isActive) {
         await tx.queryObject(
           `UPDATE ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} SET is_active = FALSE WHERE is_active = TRUE;`,
@@ -118,21 +230,31 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
         ],
       );
       return this._mapRowToConfig(result.rows[0]);
-    });
+    };
+
+    if (transactionContext) {
+      return await run(transactionContext);
+    }
+    return await this.db.transaction(run);
   }
 
   /**
    * Updates an existing MadaAdmConfig record by its ID.
+   *
+   * @param id - The ID of the configuration to update.
+   * @param values - The partial configuration values to update.
+   * @param transactionContext - Optional database transaction context.
    */
   async update(
     id: EntityId,
     values: Partial<MadaAdmConfigValues>,
+    transactionContext?: DbTransactionContext,
   ): Promise<MadaAdmConfig> {
-    return await this.db.transaction(async (transactionContext) => {
-      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+    const run = async (txCtx: DbTransactionContext) => {
+      if (!ensureIsPostgresDbTransactionCtx(txCtx)) {
         throw new Error("This method can only be called within a transaction.");
       }
-      const tx = transactionContext.tx;
+      const tx = txCtx.tx;
       const checkQuery =
         `SELECT * FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE id = $1;`;
       const checkResult = await tx.queryObject<MadaAdmConfigSnakeCased>(
@@ -202,18 +324,29 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
         ],
       );
       return this._mapRowToConfig(result.rows[0]);
-    });
+    };
+
+    if (transactionContext) {
+      return await run(transactionContext);
+    }
+    return await this.db.transaction(run);
   }
 
   /**
    * Marks a specific configuration as active, and deactivates all others.
+   *
+   * @param id - The ID of the configuration to activate.
+   * @param transactionContext - Optional database transaction context.
    */
-  async setActive(id: EntityId): Promise<MadaAdmConfig> {
-    return await this.db.transaction(async (transactionContext) => {
-      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+  async setActive(
+    id: EntityId,
+    transactionContext?: DbTransactionContext,
+  ): Promise<MadaAdmConfig> {
+    const run = async (txCtx: DbTransactionContext) => {
+      if (!ensureIsPostgresDbTransactionCtx(txCtx)) {
         throw new Error("This method can only be called within a transaction.");
       }
-      const tx = transactionContext.tx;
+      const tx = txCtx.tx;
       await tx.queryObject(
         `UPDATE ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} SET is_active = FALSE WHERE is_active = TRUE;`,
       );
@@ -232,19 +365,92 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
         throw new Error(`Mada ADM configuration with ID "${id}" not found.`);
       }
       return this._mapRowToConfig(row);
-    });
+    };
+
+    if (transactionContext) {
+      return await run(transactionContext);
+    }
+    return await this.db.transaction(run);
+  }
+
+  /**
+   * Deactivates the specified configuration record, or the currently active configuration if omitted.
+   *
+   * @param id - Optional ID of the configuration to deactivate.
+   * @param transactionContext - Optional database transaction context.
+   */
+  async deactivate(
+    id?: EntityId,
+    transactionContext?: DbTransactionContext,
+  ): Promise<void> {
+    const query = id !== undefined
+      ? `UPDATE ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} SET is_active = FALSE, updated_at = NOW() WHERE id = $1;`
+      : `UPDATE ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} SET is_active = FALSE, updated_at = NOW() WHERE is_active = TRUE;`;
+    const params = id !== undefined ? [id] : [];
+
+    if (transactionContext) {
+      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+        throw new Error("Invalid Postgres transaction context.");
+      }
+      await transactionContext.tx.queryObject(query, params);
+      return;
+    }
+
+    const client = await this.db.pool.connect();
+    try {
+      await client.queryObject(query, params);
+    } finally {
+      client.release();
+    }
   }
 
   /**
    * Deletes a MadaAdmConfig record by its ID.
+   *
+   * @param id - The ID of the configuration to delete.
+   * @param transactionContext - Optional database transaction context.
    */
-  async delete(id: EntityId): Promise<void> {
+  async delete(
+    id: EntityId,
+    transactionContext?: DbTransactionContext,
+  ): Promise<void> {
+    const query =
+      `DELETE FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE id = $1;`;
+    if (transactionContext) {
+      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+        throw new Error("Invalid Postgres transaction context.");
+      }
+      await transactionContext.tx.queryObject(query, [id]);
+      return;
+    }
+
     const client = await this.db.pool.connect();
     try {
-      await client.queryObject(
-        `DELETE FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE id = $1;`,
-        [id],
-      );
+      await client.queryObject(query, [id]);
+    } finally {
+      client.release();
+    }
+  }
+
+  /**
+   * Deletes all MadaAdmConfig records from the table.
+   *
+   * @param transactionContext - Optional database transaction context.
+   */
+  async deleteAll(transactionContext?: DbTransactionContext): Promise<void> {
+    const query =
+      `DELETE FROM ${this.schema}.${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED};`;
+    if (transactionContext) {
+      if (!ensureIsPostgresDbTransactionCtx(transactionContext)) {
+        throw new Error("Invalid Postgres transaction context.");
+      }
+      await transactionContext.tx.queryObject(query);
+      return;
+    }
+
+    const client = await this.db.pool.connect();
+    try {
+      await client.queryObject(query);
     } finally {
       client.release();
     }
@@ -252,13 +458,19 @@ export class MadaAdmConfigPostgresDML implements MadaAdmConfigDML {
 
   /**
    * Creates or updates the Mada ADM configuration.
+   *
+   * @param values - The configuration values.
+   * @param transactionContext - Optional database transaction context.
    */
-  async createOrUpdate(values: MadaAdmConfigValues): Promise<MadaAdmConfig> {
-    const currentActive = await this.get();
+  async createOrUpdate(
+    values: MadaAdmConfigValues,
+    transactionContext?: DbTransactionContext,
+  ): Promise<MadaAdmConfig> {
+    const currentActive = await this.get(transactionContext);
     if (currentActive) {
-      return await this.update(currentActive.id, values);
+      return await this.update(currentActive.id, values, transactionContext);
     }
-    return await this.insert(values, true);
+    return await this.insert(values, true, transactionContext);
   }
 }
 

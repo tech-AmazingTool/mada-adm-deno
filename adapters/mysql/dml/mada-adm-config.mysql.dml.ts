@@ -73,6 +73,53 @@ export class MadaAdmConfigMySQLDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Retrieves an exact matching MadaAdmConfig record by its configuration values.
+   */
+  async getExact(values: MadaAdmConfigValues): Promise<MadaAdmConfig | null> {
+    const isPrefixNull = values.tablesPrefix === null ||
+      values.tablesPrefix === undefined;
+    const query = isPrefixNull
+      ? `SELECT * FROM ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED}
+         WHERE tables_prefix IS NULL
+           AND is_fk_repeated = ?
+           AND is_province_repeated = ?
+           AND is_province_fk_repeated = ?
+           AND has_geojson = ?
+           AND has_adm_level = ?
+         LIMIT 1;`
+      : `SELECT * FROM ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED}
+         WHERE tables_prefix = ?
+           AND is_fk_repeated = ?
+           AND is_province_repeated = ?
+           AND is_province_fk_repeated = ?
+           AND has_geojson = ?
+           AND has_adm_level = ?
+         LIMIT 1;`;
+    const params = isPrefixNull
+      ? [
+        values.isFkRepeated,
+        values.isProvinceRepeated,
+        values.isProvinceFkRepeated,
+        values.hasGeojson,
+        values.hasAdmLevel,
+      ]
+      : [
+        values.tablesPrefix,
+        values.isFkRepeated,
+        values.isProvinceRepeated,
+        values.isProvinceFkRepeated,
+        values.hasGeojson,
+        values.hasAdmLevel,
+      ];
+    const [rows] = (await this.db.pool.query(query, params)) as unknown as [
+      MadaAdmConfigSnakeCased[],
+      unknown,
+    ];
+    const row = rows[0];
+    return row ? this._mapRowToConfig(row) : null;
+  }
+
+  /**
    * Inserts a new MadaAdmConfig record.
    */
   async insert(
@@ -240,12 +287,37 @@ export class MadaAdmConfigMySQLDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Deactivates the specified configuration record, or the currently active configuration if omitted.
+   */
+  async deactivate(id?: EntityId): Promise<void> {
+    if (id !== undefined) {
+      await this.db.pool.query(
+        `UPDATE ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} SET is_active = FALSE, updated_at = NOW() WHERE id = ?;`,
+        [id],
+      );
+    } else {
+      await this.db.pool.query(
+        `UPDATE ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} SET is_active = FALSE, updated_at = NOW() WHERE is_active = TRUE;`,
+      );
+    }
+  }
+
+  /**
    * Deletes a MadaAdmConfig record by its ID.
    */
   async delete(id: EntityId): Promise<void> {
     await this.db.pool.query(
       `DELETE FROM ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED} WHERE id = ?;`,
       [id],
+    );
+  }
+
+  /**
+   * Deletes all MadaAdmConfig records from the table.
+   */
+  async deleteAll(): Promise<void> {
+    await this.db.pool.query(
+      `DELETE FROM ${MADA_ADM_CONFIGS_TABLE_NAME_SNAKE_CASED};`,
     );
   }
 

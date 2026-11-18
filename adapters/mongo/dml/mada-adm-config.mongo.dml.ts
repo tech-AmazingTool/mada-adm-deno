@@ -51,6 +51,21 @@ export class MadaAdmConfigMongoDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Retrieves an exact matching MadaAdmConfig record by its configuration values.
+   */
+  async getExact(values: MadaAdmConfigValues): Promise<MadaAdmConfig | null> {
+    const bson = await this.#collection.findOne({
+      tablesPrefix: values.tablesPrefix ?? null,
+      isFkRepeated: values.isFkRepeated,
+      isProvinceRepeated: values.isProvinceRepeated,
+      isProvinceFkRepeated: values.isProvinceFkRepeated,
+      hasGeojson: values.hasGeojson,
+      hasAdmLevel: values.hasAdmLevel,
+    });
+    return bson ? mapMadaAdmConfigBsonToEntity(bson) : null;
+  }
+
+  /**
    * Inserts a new Mada ADM configuration record.
    *
    * @param values - The configuration values.
@@ -158,6 +173,25 @@ export class MadaAdmConfigMongoDML implements MadaAdmConfigDML {
   }
 
   /**
+   * Deactivates the specified configuration record, or the currently active configuration if omitted.
+   */
+  async deactivate(id?: EntityId): Promise<void> {
+    const now = new Date();
+    if (id !== undefined) {
+      const objectId = new ObjectId(id as string);
+      await this.#collection.updateOne(
+        { _id: objectId },
+        { $set: { isActive: false, updatedAt: now } },
+      );
+    } else {
+      await this.#collection.updateMany(
+        { isActive: true },
+        { $set: { isActive: false, updatedAt: now } },
+      );
+    }
+  }
+
+  /**
    * Deletes a Mada ADM configuration record by its ID.
    *
    * @param id - The ID of the configuration to delete.
@@ -165,6 +199,13 @@ export class MadaAdmConfigMongoDML implements MadaAdmConfigDML {
   async delete(id: EntityId): Promise<void> {
     const objectId = new ObjectId(id as string);
     await this.#collection.deleteOne({ _id: objectId });
+  }
+
+  /**
+   * Deletes all MadaAdmConfig records from the table.
+   */
+  async deleteAll(): Promise<void> {
+    await this.#collection.deleteMany({});
   }
 
   /**
