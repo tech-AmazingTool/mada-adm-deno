@@ -1,24 +1,24 @@
 import {
   CLEAR_COMMAND_NAME,
+  MANAGE_CONFIGS_COMMAND_NAME,
   QUERY_COMMAND_NAME,
-  SET_CONFIG_COMMAND_NAME,
   UPDATE_FIELD_COMMAND_NAME,
 } from "@scope/consts/cli";
 
 import { injectCliClearCommand } from "./clear.command.ts";
 import { injectCliIndexCommand } from "./index.command.ts";
-import { injectCliSetConfigCommand } from "./set-config.command.ts";
-import { injectCliUpdateFieldCommand } from "./update-field.command.ts";
+import { injectCliManageConfigCommand } from "./manage-config.command.ts";
 import { injectCliQueryCommand } from "./query.command.ts";
+import { injectCliUpdateFieldCommand } from "./update-field.command.ts";
 
 const indexCommand = injectCliIndexCommand();
 const updateFieldCommand = injectCliUpdateFieldCommand();
-const setConfigCommand = injectCliSetConfigCommand();
+const manageConfigCommand = injectCliManageConfigCommand();
 const clearCommand = injectCliClearCommand();
 const queryCommand = injectCliQueryCommand();
 
 indexCommand.command(UPDATE_FIELD_COMMAND_NAME, updateFieldCommand);
-indexCommand.command(SET_CONFIG_COMMAND_NAME, setConfigCommand);
+indexCommand.command(MANAGE_CONFIGS_COMMAND_NAME, manageConfigCommand);
 indexCommand.command(CLEAR_COMMAND_NAME, clearCommand);
 indexCommand.command(QUERY_COMMAND_NAME, queryCommand);
 

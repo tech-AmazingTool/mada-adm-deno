@@ -44,6 +44,15 @@ type WorkerToAppInsertFinishedPayload<TEvent> = EventWorkerIdPayload & {
   payload: TEvent[];
 };
 
+type WorkerToAppLogPayload = {
+  type: typeof WORKER_EVENTS.LOG;
+  lines: string[];
+};
+
+type WorkerToAppDonePayload = {
+  type: typeof WORKER_EVENTS.DONE;
+};
+
 /**
  * Configuration options for a WorkerJob.
  */
@@ -83,6 +92,12 @@ class WorkerJob<TInputMessage, TOutputMessage> {
 
   public readonly jobIds = new Set<string>();
   public onJobCompleted?: (payload: TOutputMessage[]) => void;
+  public onLog?: (lines: string[]) => void;
+
+  #isDone!: Promise<boolean>;
+  get isDone() {
+    return this.#isDone;
+  }
 
   constructor(
     private worker: Worker,
@@ -127,10 +142,17 @@ class WorkerJob<TInputMessage, TOutputMessage> {
       [transform.readable],
     );
 
+    let resolveIsDoneFn!: (value: boolean | PromiseLike<boolean>) => void;
+    this.#isDone = new Promise((resolve) => {
+      resolveIsDoneFn = resolve;
+    });
+
     this.worker.addEventListener("message", (payload: MessageEvent) => {
       const data = payload.data as
         | WorkerToAppProcessingFinishedPayload<TOutputMessage>
-        | WorkerToAppInsertFinishedPayload<TOutputMessage>;
+        | WorkerToAppInsertFinishedPayload<TOutputMessage>
+        | WorkerToAppLogPayload
+        | WorkerToAppDonePayload;
 
       if (
         data &&
@@ -150,6 +172,14 @@ class WorkerJob<TInputMessage, TOutputMessage> {
           this._pendingTask = null;
           this._pendingTaskResolve = null;
         }
+      }
+
+      if (data.type === WORKER_EVENTS.LOG) {
+        this.onLog?.(data.lines);
+      }
+
+      if (data.type === WORKER_EVENTS.DONE) {
+        resolveIsDoneFn(true);
       }
     });
 
@@ -253,8 +283,6 @@ export class InMemoryQueueWorkersMediator<
       insertHwm?: number;
     };
 
-  #pulledMessagesCount = { processed: 0, inserted: 0 };
-
   /**
    * Initializes a new instance of the InMemoryQueueWorkersMediator.
    *
@@ -285,6 +313,11 @@ export class InMemoryQueueWorkersMediator<
     const {
       onProcessingFinished,
       onInsertFinished,
+      onProcessingProgress,
+      onInsertProgress,
+      onProcessingLog,
+      onInsertLog,
+      totalCount = 0,
       batchSize = DEFAULT_BATCH_SIZE,
       maxRetries,
     } = options ?? {};
@@ -318,8 +351,22 @@ export class InMemoryQueueWorkersMediator<
         ),
     );
 
+    let processedMessagesCount = 0;
+
     processingJobs.forEach((job) => {
-      job.onJobCompleted = (event) => onProcessingFinished?.(event);
+      job.onJobCompleted = (event) => {
+        onProcessingFinished?.(event);
+        processedMessagesCount += event.length;
+        onProcessingProgress?.({
+          current: processedMessagesCount,
+          total: totalCount,
+          progress: totalCount > 0 ? (processedMessagesCount / totalCount) : 0,
+        });
+      };
+
+      job.onLog = (lines) => {
+        onProcessingLog?.(lines);
+      };
     });
 
     const messagesReadable = (() => {
@@ -377,7 +424,6 @@ export class InMemoryQueueWorkersMediator<
             await writer.write(chunk);
             writer.releaseLock();
             workerIndex = (workerIndex + 1) % processingJobs.length;
-            this.#pulledMessagesCount.processed += chunk.length;
           },
           close: async () => {
             for (const job of processingJobs) {
@@ -406,7 +452,22 @@ export class InMemoryQueueWorkersMediator<
         hwm: this.#options.insertHwm,
         maxRetries,
       });
-      insertJob.onJobCompleted = (event) => onInsertFinished?.(event);
+
+      let insertedMessagesCount = 0;
+
+      insertJob.onJobCompleted = (event) => {
+        onInsertFinished?.(event);
+        insertedMessagesCount += event.length;
+        onInsertProgress?.({
+          current: insertedMessagesCount,
+          total: totalCount,
+          progress: totalCount > 0 ? (insertedMessagesCount / totalCount) : 0,
+        });
+      };
+
+      insertJob.onLog = (lines) => {
+        onInsertLog?.(lines);
+      };
 
       const gathererReadable = new ReadableStream<TProcessingFinishedPayload[]>(
         {
@@ -415,7 +476,6 @@ export class InMemoryQueueWorkersMediator<
               processingJobs.map(async (job) => {
                 for await (const batch of job.outputReadableStream) {
                   controller.enqueue(batch);
-                  this.#pulledMessagesCount.inserted += batch.length;
                 }
               }),
             );
@@ -446,51 +506,11 @@ export class InMemoryQueueWorkersMediator<
     ].filter((t): t is Promise<void> => t !== null);
 
     await Promise.all(pendingTasks);
-  }
 
-  /**
-   * Retrieves the persisted context data for the processing stage.
-   * In-memory implementation does not currently persist context.
-   */
-  get persistedContext(): null {
-    return null;
-  }
-
-  /**
-   * Retrieves the last processing message.
-   * In-memory implementation does not currently store the last message.
-   */
-  get persistedLastMessage(): null {
-    return null;
-  }
-
-  /**
-   * Retrieves the count of messages that have been pulled (dequeued) so far.
-   */
-  get pulledMessagesCount(): { processed: number; inserted: number } {
-    return { ...this.#pulledMessagesCount };
-  }
-
-  /**
-   * Clears the queue related data from previous operations.
-   */
-  clearQueue(): void {
-    this.#pulledMessagesCount = { processed: 0, inserted: 0 };
-  }
-
-  /**
-   * Clears the persisted data from previous operations.
-   */
-  clearPersisted(): void {
-    this.#pulledMessagesCount = { processed: 0, inserted: 0 };
-  }
-
-  /**
-   * Checks if the job has already ended.
-   * In-memory implementation always returns false for fresh runs.
-   */
-  get isJobEnded(): boolean {
-    return false;
+    await Promise.all(processingJobs.map((j) => j.isDone));
+    if (insertJob) {
+      await insertJob.isDone;
+    }
   }
 }
 
@@ -518,6 +538,15 @@ export class InMemoryQueueWorkerExecutor<
       ? handler.teardown
       : undefined;
 
+    function log(...lines: string[]) {
+      self.postMessage(
+        {
+          type: WORKER_EVENTS.LOG,
+          lines,
+        } satisfies WorkerToAppLogPayload,
+      );
+    }
+
     self.addEventListener("message", async (event: Event) => {
       const e = event as MessageEvent;
       if (e.data?.type !== WORKER_EVENTS.INIT) {
@@ -538,7 +567,7 @@ export class InMemoryQueueWorkerExecutor<
 
       await initHook?.(context, {
         workerMetadata: { type: workerType, index: workerIndex },
-      });
+      }, log);
 
       let isTornDown = false;
       const safeTeardown = async () => {
@@ -546,7 +575,7 @@ export class InMemoryQueueWorkerExecutor<
           isTornDown = true;
           await teardownHook?.(context, {
             workerMetadata: { type: workerType, index: workerIndex },
-          });
+          }, log);
         }
       };
 
@@ -558,7 +587,7 @@ export class InMemoryQueueWorkerExecutor<
               const result = await execute(context, batch, {
                 retryCount: attempt,
                 workerMetadata: { type: workerType, index: workerIndex },
-              });
+              }, log);
               postMessage({
                 type: finishEventType,
                 workerId: jobId,
@@ -581,9 +610,13 @@ export class InMemoryQueueWorkerExecutor<
       } catch (err) {
         await safeTeardown();
         throw err;
-      } finally {
-        await safeTeardown();
       }
+
+      await safeTeardown();
+
+      self.postMessage({
+        type: WORKER_EVENTS.DONE,
+      });
     });
   }
 }

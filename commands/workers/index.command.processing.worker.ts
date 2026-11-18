@@ -66,16 +66,17 @@ const executor: QueueWorkerExecutor<SeedAdmJobContext, AdmValues, AdmRecord> =
     >();
 
 executor.run({
-  async init(context, { workerMetadata }) {
+  async init(context, { workerMetadata }, log) {
     db = await injectDbConnection(context.dbType);
     await db.connect(context.dbConnectionParams);
 
-    console.log(
-      ansi.cursorUp(context.progressBarsLinesCount) + "\x1b[1L" +
-        ansi.cursorLeft +
-        colors.magenta(`   [Processing worker #${workerMetadata.index}] Init`) +
-        ansi.cursorDown(context.progressBarsLinesCount),
-    );
+    // console.log(
+    //   ansi.cursorUp(context.progressBarsLinesCount) + "\x1b[1L" +
+    //     ansi.cursorLeft +
+    //     colors.magenta(`   [Processing worker #${workerMetadata.index}] Init`) +
+    //     ansi.cursorDown(context.progressBarsLinesCount),
+    // );
+    log(colors.magenta(`   [Processing worker #${workerMetadata.index}] Init`));
 
     const args = [
       context.config,
@@ -88,11 +89,12 @@ executor.run({
     districtsDML = injectDistrictsDML(...args);
     communesDML = injectCommunesDML(...args);
   },
-  async execute(context, messages, { workerMetadata, retryCount }) {
+  async execute(context, messages, { workerMetadata, retryCount }, log) {
     const levelTitle = ADM_LEVEL_TITLE_BY_CODE.get(context.currentAdmLevel) ??
       "unknown";
     const retryLog = retryCount > 0 ? ` (retry #${retryCount})` : "";
 
+    const logLines: string[] = [];
     messages.forEach((m) => {
       let name = "";
       if (isFokontanyValues(m)) {
@@ -111,19 +113,21 @@ executor.run({
       const logMessage = colors.magenta(
         `   [Processing worker #${workerMetadata.index}] processing ${levelTitle}: ${name}${retryLog}`,
       );
+      logLines.push(logMessage);
 
-      if (context.progressBarsLinesCount > 0) {
-        console.log(
-          ansi.cursorUp(context.progressBarsLinesCount) +
-            "\x1b[1L" + // Raw ANSI sequence to insert a line
-            ansi.cursorLeft +
-            logMessage +
-            ansi.cursorDown(context.progressBarsLinesCount),
-        );
-      } else {
-        console.log(logMessage);
-      }
+      // if (context.progressBarsLinesCount > 0) {
+      //   console.log(
+      //     ansi.cursorUp(context.progressBarsLinesCount) +
+      //       "\x1b[1L" + // Raw ANSI sequence to insert a line
+      //       ansi.cursorLeft +
+      //       logMessage +
+      //       ansi.cursorDown(context.progressBarsLinesCount),
+      //   );
+      // } else {
+      //   console.log(logMessage);
+      // }
     });
+    log(...logLines);
 
     switch (context.currentAdmLevel) {
       case AdmLevelCode.FOKONTANY: {
@@ -288,14 +292,19 @@ executor.run({
         break;
     }
   },
-  async teardown(context, { workerMetadata }) {
-    console.log(
-      ansi.cursorUp(context.progressBarsLinesCount) + "\x1b[1L" +
-        ansi.cursorLeft +
-        colors.magenta(
-          `   [Processing worker #${workerMetadata.index}] Teardown`,
-        ) +
-        ansi.cursorDown(context.progressBarsLinesCount),
+  async teardown(context, { workerMetadata }, log) {
+    // console.log(
+    //   ansi.cursorUp(context.progressBarsLinesCount) + "\x1b[1L" +
+    //     ansi.cursorLeft +
+    //     colors.magenta(
+    //       `   [Processing worker #${workerMetadata.index}] Teardown`,
+    //     ) +
+    //     ansi.cursorDown(context.progressBarsLinesCount),
+    // );
+    log(
+      colors.magenta(
+        `   [Processing worker #${workerMetadata.index}] Teardown`,
+      ),
     );
     await db.close();
   },

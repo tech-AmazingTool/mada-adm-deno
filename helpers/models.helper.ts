@@ -25,6 +25,7 @@ import type {
   MadaAdmConfig,
   MadaAdmConfigBSON,
   MadaAdmConfigSnakeCased,
+  MadaAdmConfigValues,
   Province,
   ProvinceBSON,
   ProvinceRecord,
@@ -92,6 +93,7 @@ export function mapMadaAdmConfigSnakeToCamel(
     isProvinceFkRepeated: entity.is_province_fk_repeated,
     hasGeojson: entity.has_geojson,
     hasAdmLevel: entity.has_adm_level,
+    isActive: !!entity.is_active,
     createdAt: parseTimestamp(entity.created_at),
     updatedAt: parseTimestamp(entity.updated_at),
   };
@@ -475,6 +477,7 @@ export function mapMadaAdmConfigBsonToEntity(
   const { _id, createdAt, updatedAt, ...rest } = bson;
   return {
     ...rest,
+    isActive: !!bson.isActive,
     id: _id.toString(),
     createdAt: createdAt?.toISOString(),
     updatedAt: updatedAt?.toISOString(),
@@ -780,4 +783,25 @@ export function mapAdmEntityUnionSnakeCasedRecordToEntity(
         `Unknown ADM level code: ${admLevel satisfies never} when mapping adm entity union record to entity.`,
       );
   }
+}
+
+/**
+ * Compares two sets of Mada ADM configuration values for equality, ignoring `isActive`.
+ *
+ * @param config1 - The first configuration values to compare.
+ * @param config2 - The second configuration values to compare.
+ * @returns True if both configurations have identical schema attributes, false otherwise.
+ */
+export function compareMadaAdmConfigValues(
+  config1: MadaAdmConfigValues,
+  config2: MadaAdmConfigValues,
+): boolean {
+  return (
+    config1.tablesPrefix === config2.tablesPrefix &&
+    config1.isFkRepeated === config2.isFkRepeated &&
+    config1.isProvinceRepeated === config2.isProvinceRepeated &&
+    config1.isProvinceFkRepeated === config2.isProvinceFkRepeated &&
+    config1.hasGeojson === config2.hasGeojson &&
+    config1.hasAdmLevel === config2.hasAdmLevel
+  );
 }

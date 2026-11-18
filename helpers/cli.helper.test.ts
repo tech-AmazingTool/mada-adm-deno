@@ -6,8 +6,6 @@ import {
   DEFAULT_WORKER_JOB_HWM,
 } from "@scope/lib/in-memory-workers-mediators";
 import {
-  DEFAULT_HEALTHCHECK_INTERVAL,
-  DEFAULT_PENDING_MIN_DURATION_THRESHOLD,
   DEFAULT_XREAD_BLOCK_DURATION,
 } from "@scope/lib/redis-workers-mediators";
 import {
@@ -276,14 +274,6 @@ Deno.test("resolveIndexCliConfig", async (t) => {
     assertEquals(result.queueMaxRetries, DEFAULT_MAX_RETRIES);
     assertEquals(result.inMemoryProcessingHwm, DEFAULT_WORKER_JOB_HWM);
     assertEquals(result.inMemoryInsertHwm, DEFAULT_WORKER_JOB_HWM);
-    assertEquals(
-      result.workerHealthcheckInterval,
-      DEFAULT_HEALTHCHECK_INTERVAL,
-    );
-    assertEquals(
-      result.workerPendingMinDurationThreshold,
-      DEFAULT_PENDING_MIN_DURATION_THRESHOLD,
-    );
     assertEquals(result.xreadBlockDuration, DEFAULT_XREAD_BLOCK_DURATION);
     assertEquals(
       result.processingWorkersCount,
@@ -330,8 +320,6 @@ Deno.test("resolveIndexCliConfig", async (t) => {
         queueMaxRetries: 5,
         inMemoryProcessingHwm: 32,
         inMemoryInsertHwm: 64,
-        workerHealthcheckInterval: 2000,
-        workerPendingMinDurationThreshold: 30000,
         xreadBlockDuration: 1000,
         processingWorkersCount: 8,
       });
@@ -339,8 +327,6 @@ Deno.test("resolveIndexCliConfig", async (t) => {
       assertEquals(result.queueMaxRetries, 5);
       assertEquals(result.inMemoryProcessingHwm, 32);
       assertEquals(result.inMemoryInsertHwm, 64);
-      assertEquals(result.workerHealthcheckInterval, 2000);
-      assertEquals(result.workerPendingMinDurationThreshold, 30000);
       assertEquals(result.xreadBlockDuration, 1000);
       assertEquals(result.processingWorkersCount, 8);
     },

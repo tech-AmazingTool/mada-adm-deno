@@ -41,6 +41,7 @@ export class MadaAdmConfigMySQLDDL implements TableDDL {
         is_province_fk_repeated BOOLEAN NOT NULL DEFAULT FALSE,
         has_geojson BOOLEAN NOT NULL DEFAULT FALSE,
         has_adm_level BOOLEAN NOT NULL DEFAULT TRUE,
+        is_active BOOLEAN NOT NULL DEFAULT FALSE,
         created_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3),
         updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

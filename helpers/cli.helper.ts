@@ -12,8 +12,6 @@ import {
   DEFAULT_WORKER_JOB_HWM,
 } from "@scope/lib/in-memory-workers-mediators";
 import {
-  DEFAULT_HEALTHCHECK_INTERVAL,
-  DEFAULT_PENDING_MIN_DURATION_THRESHOLD,
   DEFAULT_XREAD_BLOCK_DURATION,
 } from "@scope/lib/redis-workers-mediators";
 import {
@@ -156,10 +154,6 @@ export function resolveIndexCliConfig(
     queueMaxRetries: args.queueMaxRetries ?? DEFAULT_MAX_RETRIES,
     inMemoryProcessingHwm: args.inMemoryProcessingHwm ?? DEFAULT_WORKER_JOB_HWM,
     inMemoryInsertHwm: args.inMemoryInsertHwm ?? DEFAULT_WORKER_JOB_HWM,
-    workerHealthcheckInterval: args.workerHealthcheckInterval ??
-      DEFAULT_HEALTHCHECK_INTERVAL,
-    workerPendingMinDurationThreshold: args.workerPendingMinDurationThreshold ??
-      DEFAULT_PENDING_MIN_DURATION_THRESHOLD,
     xreadBlockDuration: args.xreadBlockDuration ?? DEFAULT_XREAD_BLOCK_DURATION,
     processingWorkersCount: args.processingWorkersCount ??
       DEFAULT_PROCESSING_WORKERS_COUNT,
@@ -180,7 +174,7 @@ export function displayMadaAdmConfig(
     [
       "Tables prefix",
       values.tablesPrefix
-        ? colors.green(values.tablesPrefix)
+        ? colors.green(`"${values.tablesPrefix}"`)
         : colors.gray("None"),
     ],
     [
@@ -203,8 +197,16 @@ export function displayMadaAdmConfig(
       "A table stores its ADM level index (0 to 4)",
       values.hasAdmLevel ? colors.green("Yes") : colors.red("No"),
     ],
+    ...(values.isActive !== undefined
+      ? [
+        [
+          "Status",
+          values.isActive ? colors.green("Active") : colors.gray("Inactive"),
+        ],
+      ]
+      : []),
   );
-  console.log(colors.blue(`\n⚙️  ${title}:`));
+  console.log(colors.blue(`⚙️  ${title}:`));
   console.log(table.toString());
 }
 
@@ -217,41 +219,71 @@ export function displayMadaAdmConfig(
 export async function promptMadaAdmConfig(
   prevValues?: Partial<MadaAdmConfigValues>,
 ): Promise<MadaAdmConfigValues> {
+  const hasPrev = prevValues !== undefined;
+  const fmtBool = (val?: boolean) => {
+    return hasPrev
+      ? ` (Current: ${val ? colors.green("Yes") : colors.red("No")})`
+      : "";
+  };
+  const fmtStr = (val?: string | null) => {
+    return hasPrev
+      ? ` (Current: ${
+        val ? colors.green('"' + val + '"') : colors.gray("None")
+      })`
+      : "";
+  };
+
+  const tablesPrefixNoneValueIndicator = prevValues
+    ? `whitespace ${colors.gray('" "')}`
+    : "empty";
   const result = await prompt([
     {
       name: "tablesPrefix",
-      message: "Tables Prefix (leave empty for none):",
+      message:
+        `Tables Prefix (leave ${tablesPrefixNoneValueIndicator} for none)${
+          fmtStr(prevValues?.tablesPrefix)
+        }:`,
       type: Input,
       default: prevValues?.tablesPrefix ?? "",
     },
     {
       name: "isFkRepeated",
-      message: "Are parent tables's foreign keys repeated?",
+      message: `Are parent tables's foreign keys repeated?${
+        fmtBool(prevValues?.isFkRepeated)
+      }`,
       type: Confirm,
       default: prevValues?.isFkRepeated ?? true,
     },
     {
       name: "isProvinceRepeated",
-      message: "Is a parent province's name repeated across sub-tables?",
+      message: `Is a parent province's name repeated across sub-tables?${
+        fmtBool(prevValues?.isProvinceRepeated)
+      }`,
       type: Confirm,
       default: prevValues?.isProvinceRepeated ?? false,
     },
     {
       name: "isProvinceFkRepeated",
-      message: "Is a parent province's foreign key repeated across sub-tables?",
+      message: `Is a parent province's foreign key repeated across sub-tables?${
+        fmtBool(prevValues?.isProvinceFkRepeated)
+      }`,
       type: Confirm,
       default: prevValues?.isProvinceFkRepeated ?? false,
     },
     {
       name: "hasGeojson",
       message:
-        "Do tables include the spatial geometries of their respective ADM boundaries?",
+        `Do tables include the spatial geometries of their respective ADM boundaries?${
+          fmtBool(prevValues?.hasGeojson)
+        }`,
       type: Confirm,
       default: prevValues?.hasGeojson ?? false,
     },
     {
       name: "hasAdmLevel",
-      message: "Do the tables include an adm level index (0 to 4) column?",
+      message: `Do the tables include an adm level index (0 to 4) column?${
+        fmtBool(prevValues?.hasAdmLevel)
+      }`,
       type: Confirm,
       default: prevValues?.hasAdmLevel ?? true,
     },

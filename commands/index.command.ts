@@ -5,7 +5,7 @@ import { TextLineStream } from "@std/streams";
 import { ansi } from "@cliffy/ansi";
 import { colors } from "@cliffy/ansi/colors";
 import { Command } from "@cliffy/command";
-import { Confirm } from "@cliffy/prompt";
+import { Confirm, Select } from "@cliffy/prompt";
 
 import {
   CLI_DESCRIPTION,
@@ -119,14 +119,19 @@ import {
 } from "@scope/helpers/cli";
 import {
   compareAdmValues,
+  compareMadaAdmConfigValues,
   isCommuneValues,
   isDistrictValues,
   isFokontanyValues,
   isProvinceValues,
   isRegionValues,
 } from "@scope/helpers/models";
+import { injectAdmIntegrationProgressRenderer } from "@scope/helpers/render-adm-integration-progress";
 import { injectInMemoryQueueWorkersMediator } from "@scope/lib/in-memory-workers-mediators";
-import { injectRedisQueueWorkersMediator } from "@scope/lib/redis-workers-mediators";
+import {
+  injectRedisQueueWorkersMediator,
+  RedisQueueWorkersMediator,
+} from "@scope/lib/redis-workers-mediators";
 import type {
   QueueWorkersMediator,
   WorkerPool,
@@ -142,15 +147,32 @@ import type {
   IndexActionCliConfigResolved,
 } from "@scope/types/cli";
 import type { SeedAdmJobContext } from "@scope/types/command";
-import type { DbConnection, TableDDL } from "@scope/types/db";
+import type { DbConnection, DbTransactionContext } from "@scope/types/db";
 import type {
   AdmRecord,
   AdmValues,
+  EntityId,
+  MadaAdmConfig,
   MadaAdmConfigValues,
 } from "@scope/types/models";
 import { DateUtils } from "@scope/utils";
 
 const PROGRESS_BARS_LINES_COUNT = 5;
+
+/**
+ * Supported index action choices.
+ */
+type IndexAction = "resume" | "continue" | "change" | "abort";
+
+/**
+ * Supported change configuration action choices.
+ */
+type ChangeConfigAction = "create" | "update" | "switch";
+
+/**
+ * Supported post-input actions when confirmation, retry, or abort is requested.
+ */
+type PostInputAction = "continue" | "retry" | "abort";
 
 /**
  * The root CLI command for the administrative data pipeline.
@@ -177,6 +199,133 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
       return m.province;
     }
     return "unknown";
+  }
+
+  /**
+   * Checks whether all ADM tables exist for the specified configuration.
+   *
+   * @param config - The Mada ADM configuration to check tables for.
+   * @param dbType - The active database type.
+   * @param db - The active database connection.
+   * @param pgSchema - Optional PostgreSQL schema name.
+   * @returns True if all ADM tables exist, false otherwise.
+   */
+  private async checkAdmTablesExist(
+    config: MadaAdmConfigValues,
+    dbType: DbType,
+    db: DbConnection,
+    pgSchema?: string,
+  ): Promise<boolean> {
+    const ddlOptions = pgSchema ? { pgSchema } : undefined;
+    const provincesDDL = injectProvincesDDL(config, dbType, db, ddlOptions);
+    const regionsDDL = injectRegionsDDL(config, dbType, db, ddlOptions);
+    const districtsDDL = injectDistrictsDDL(config, dbType, db, ddlOptions);
+    const communesDDL = injectCommunesDDL(config, dbType, db, ddlOptions);
+    const fokontanysDDL = injectFokontanysDDL(config, dbType, db, ddlOptions);
+
+    const exists = (
+      await Promise.all([
+        provincesDDL.exists(),
+        regionsDDL.exists(),
+        districtsDDL.exists(),
+        communesDDL.exists(),
+        fokontanysDDL.exists(),
+      ])
+    ).every((e) => e);
+
+    resetProvincesDDL(dbType);
+    resetRegionsDDL(dbType);
+    resetDistrictsDDL(dbType);
+    resetCommunesDDL(dbType);
+    resetFokontanysDDL(dbType);
+
+    return exists;
+  }
+
+  /**
+   * Drops all ADM tables for the specified configuration in foreign key dependency order.
+   *
+   * @param config - The Mada ADM configuration to drop tables for.
+   * @param dbType - The active database type.
+   * @param db - The active database connection.
+   * @param pgSchema - Optional PostgreSQL schema name.
+   * @param txCtx - Optional transaction context.
+   */
+  private async dropAdmTables(
+    config: MadaAdmConfigValues,
+    dbType: DbType,
+    db: DbConnection,
+    pgSchema?: string,
+    txCtx?: DbTransactionContext,
+  ): Promise<void> {
+    const ddlOptions = pgSchema ? { pgSchema } : undefined;
+    const fokontanysDDL = injectFokontanysDDL(config, dbType, db, ddlOptions);
+    const communesDDL = injectCommunesDDL(config, dbType, db, ddlOptions);
+    const districtsDDL = injectDistrictsDDL(config, dbType, db, ddlOptions);
+    const regionsDDL = injectRegionsDDL(config, dbType, db, ddlOptions);
+    const provincesDDL = injectProvincesDDL(config, dbType, db, ddlOptions);
+
+    for (
+      const ddl of [
+        fokontanysDDL,
+        communesDDL,
+        districtsDDL,
+        regionsDDL,
+        provincesDDL,
+      ]
+    ) {
+      console.log(`   Dropping the ${ddl.tableName} table ...`);
+      await ddl.drop(txCtx);
+    }
+
+    resetProvincesDDL(dbType);
+    resetRegionsDDL(dbType);
+    resetDistrictsDDL(dbType);
+    resetCommunesDDL(dbType);
+    resetFokontanysDDL(dbType);
+  }
+
+  /**
+   * Creates all ADM tables for the specified configuration in parent-to-child order.
+   *
+   * @param config - The Mada ADM configuration to create tables for.
+   * @param dbType - The active database type.
+   * @param db - The active database connection.
+   * @param pgSchema - Optional PostgreSQL schema name.
+   * @param txCtx - Optional transaction context.
+   */
+  private async createAdmTables(
+    config: MadaAdmConfigValues,
+    dbType: DbType,
+    db: DbConnection,
+    pgSchema?: string,
+    txCtx?: DbTransactionContext,
+  ): Promise<void> {
+    const ddlOptions = pgSchema ? { pgSchema } : undefined;
+    const provincesDDL = injectProvincesDDL(config, dbType, db, ddlOptions);
+    const regionsDDL = injectRegionsDDL(config, dbType, db, ddlOptions);
+    const districtsDDL = injectDistrictsDDL(config, dbType, db, ddlOptions);
+    const communesDDL = injectCommunesDDL(config, dbType, db, ddlOptions);
+    const fokontanysDDL = injectFokontanysDDL(config, dbType, db, ddlOptions);
+
+    for (
+      const ddl of [
+        provincesDDL,
+        regionsDDL,
+        districtsDDL,
+        communesDDL,
+        fokontanysDDL,
+      ]
+    ) {
+      console.log(`   Creating the ${ddl.tableName} table ...`);
+      await ddl.create(txCtx);
+    }
+
+    resetProvincesDDL(dbType);
+    resetRegionsDDL(dbType);
+    resetDistrictsDDL(dbType);
+    resetCommunesDDL(dbType);
+    resetFokontanysDDL(dbType);
   }
 
   /**
@@ -599,7 +748,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
   private async handleGlobalAction(args: GlobalCliConfigResolved) {
     console.log(
       colors.blue.bold(
-        `\n🚀 Initializing Madagascar Administrative Boundaries (Mada ADM) CLI...`,
+        `🚀 Initializing Madagascar Administrative Boundaries (Mada ADM) CLI...\n`,
       ),
     );
     console.log(colors.gray(`   Database Type: ${args.dbType}`));
@@ -672,11 +821,12 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
       default:
         break;
     }
+    console.log();
 
     const db = await injectDbConnection(args.dbType);
     this.#db = db;
 
-    console.log(colors.blue(`\n🔌 Establishing database connection...`));
+    console.log(colors.blue(`🔌 Establishing database connection...`));
     await attemptDbConnection(db, {
       dbType: args.dbType,
       pg: args.pg,
@@ -700,31 +850,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
     let redis: RedisConnection | null = null;
 
     try {
-      const db = await injectDbConnection(args.dbType);
-      let prevAdmConfigValues: MadaAdmConfigValues | null = null;
-
-      const configDdl = injectMadaAdmConfigDDL(args.dbType, db, {
-        pgSchema: args.pgSchema,
-      });
-      const configDml = await injectMadaAdmConfigDML(args.dbType, db, {
-        pgSchema: args.pgSchema,
-      });
-
-      const tableExists = await configDdl.exists();
-      if (tableExists) {
-        const existingConfig = await configDml.get();
-        if (existingConfig) {
-          prevAdmConfigValues = {
-            tablesPrefix: existingConfig.tablesPrefix,
-            isFkRepeated: existingConfig.isFkRepeated,
-            isProvinceRepeated: existingConfig.isProvinceRepeated,
-            isProvinceFkRepeated: existingConfig.isProvinceFkRepeated,
-            hasGeojson: existingConfig.hasGeojson,
-            hasAdmLevel: existingConfig.hasAdmLevel,
-          };
-        }
-      }
-
+      const db = this.#db ?? (await injectDbConnection(args.dbType));
       const redisConfig = args.redis;
       const disableRedis = args.disableRedis;
 
@@ -778,24 +904,36 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
           {
             processingContextKey: "seed-adm:processing:context",
             processingStreamKey: "seed-adm:processing:stream",
+            processingFailedIdsKey: "seed-adm:processing:failed-ids",
             insertContextKey: "seed-adm:insert:context",
             insertStreamKey: "seed-adm:insert:stream",
+            insertFailedIdsKey: "seed-adm:insert:failed-ids",
             processingConsumerGroupName: "seed-adm:processing-group",
             insertConsumerGroupName: "seed-adm:insert-group",
             persistedLastMessageKey: "seed-adm:persisted-last:message",
-            persistedLastInsertMessageKey:
-              "seed-adm:persisted-last-insert:message",
-            processingDlqStreamKey: "seed-adm:processing:dlq",
-            insertDlqStreamKey: "seed-adm:insert:dlq",
-            healthcheckInterval: args.workerHealthcheckInterval,
-            pendingMinDurationThreshold: args.workerPendingMinDurationThreshold,
             xreadBlockDuration: args.xreadBlockDuration,
+            compareMessages: compareAdmValues,
+            onRetryPendingPrompt: async () => {
+              console.log(
+                colors.yellow(
+                  `⚠️  The processings or the insertions of some ADM territories were not completed. Do you want to retry those tasks?`,
+                ),
+              );
+              const retry = await Confirm.prompt({
+                message: "Retry?",
+                default: true,
+              });
+              if (!retry) {
+                Deno.exit(1);
+              }
+              return true;
+            },
             debug: args.cliDebug,
           },
         );
 
         console.log(
-          colors.green.bold(`✅ Redis Queue Workers Mediator initialized.`),
+          colors.green.bold(`✅ Redis Queue Workers Mediator initialized.\n`),
         );
       } else {
         console.log(
@@ -820,302 +958,488 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
         );
       }
 
-      const madaAdmConfigDDL = injectMadaAdmConfigDDL(args.dbType, this.#db, {
+      const madaAdmConfigDDL = injectMadaAdmConfigDDL(args.dbType, db, {
         pgSchema: args.pgSchema,
       });
-      let provincesDDL!: TableDDL;
-      let regionsDDL!: TableDDL;
-      let districtsDDL!: TableDDL;
-      let communesDDL!: TableDDL;
-      let fokontanysDDL!: TableDDL;
+      const madaAdmConfigDML = await injectMadaAdmConfigDML(args.dbType, db, {
+        pgSchema: args.pgSchema,
+      });
 
-      const madaAdmConfigDML = await injectMadaAdmConfigDML(
-        args.dbType,
-        this.#db,
-        {
-          pgSchema: args.pgSchema,
-        },
-      );
+      let action: IndexAction = "continue";
+      let activeConfig: MadaAdmConfig | null = null;
+      let prevJobContext: SeedAdmJobContext | null = null;
 
-      const madaAdmConfigTableExists = await madaAdmConfigDDL.exists();
-      if (madaAdmConfigTableExists) {
-        prevAdmConfigValues = await madaAdmConfigDML.get();
-      } else {
-        await madaAdmConfigDDL.create();
-      }
-      let shouldResetAdmConfig = true;
-      if (prevAdmConfigValues) {
-        displayMadaAdmConfig(
-          "Found existing Mada ADM configuration",
-          prevAdmConfigValues,
-        );
-        console.log(
-          colors.yellow(
-            `\nWould you like to update the current Mada ADM configuration ?`,
-          ),
-        );
-        shouldResetAdmConfig = await Confirm.prompt({
-          message: "Update the current Mada ADM configuration",
-          default: false,
-        });
-      }
-      let activeAdmConfigValues!: MadaAdmConfigValues;
-      if (shouldResetAdmConfig) {
-        if (prevAdmConfigValues) {
+      do {
+        activeConfig = null;
+        const admConfigsTableExists = await madaAdmConfigDDL.exists();
+        if (admConfigsTableExists) {
+          activeConfig = await madaAdmConfigDML.get();
+        } else {
+          await madaAdmConfigDDL.create();
+        }
+
+        const existingConfigs = await madaAdmConfigDML.getAll();
+        if (existingConfigs.length === 0) {
           console.log(
             colors.yellow(
-              `\nWould you like to clear the tables of the previous configuration ?\nIf no, they will be left intact while new tables are created for the new configuration.`,
+              "ℹ️  No existing ADM configuration found in the database.\n",
             ),
           );
-          const shouldClearPrevTables = await Confirm.prompt({
-            message: "Clear previous configuration tables",
-            default: true,
-          });
-
-          if (shouldClearPrevTables) {
-            provincesDDL = injectProvincesDDL(
-              prevAdmConfigValues,
-              args.dbType,
-              this.#db,
-              {
-                pgSchema: args.pgSchema,
-              },
-            );
-            regionsDDL = injectRegionsDDL(
-              prevAdmConfigValues,
-              args.dbType,
-              this.#db,
-              {
-                pgSchema: args.pgSchema,
-              },
-            );
-            districtsDDL = injectDistrictsDDL(
-              prevAdmConfigValues,
-              args.dbType,
-              this.#db,
-              {
-                pgSchema: args.pgSchema,
-              },
-            );
-            communesDDL = injectCommunesDDL(
-              prevAdmConfigValues,
-              args.dbType,
-              this.#db,
-              {
-                pgSchema: args.pgSchema,
-              },
-            );
-            fokontanysDDL = injectFokontanysDDL(
-              prevAdmConfigValues,
-              args.dbType,
-              this.#db,
-              {
-                pgSchema: args.pgSchema,
-              },
-            );
-            const admTablesExist = (await Promise.all([
-              regionsDDL.exists(),
-              provincesDDL.exists(),
-              districtsDDL.exists(),
-              communesDDL.exists(),
-              fokontanysDDL.exists(),
-            ])).every((exists) => exists);
-            if (admTablesExist) {
-              const admTablesDDLs = [
-                fokontanysDDL,
-                communesDDL,
-                districtsDDL,
-                regionsDDL,
-                provincesDDL,
-              ];
-              console.log(
-                colors.red(
-                  `\n🗑️  Dropping all tables for the previous configuration...`,
-                ),
-              );
-              await this.#db.transaction(async (transactionContext) => {
-                for (const admTableDDL of admTablesDDLs) {
-                  console.log(`Dropping table ${admTableDDL.tableName} ...`);
-                  await admTableDDL.drop(transactionContext);
-                }
-              }, DDL_TRANSACTION_OPTIONS);
-              console.log(
-                colors.green.bold(
-                  `✅  All tables for the previous configuration dropped successfully.`,
-                ),
-              );
+        } else {
+          console.log(
+            colors.blue(
+              `Found ${existingConfigs.length} existing Mada ADM configuration(s):`,
+            ),
+          );
+          console.log();
+          for (let i = 0; i < existingConfigs.length; i++) {
+            const num = i + 1;
+            const isActiveSuffix = existingConfigs[i].isActive
+              ? " (Active) "
+              : " ";
+            if (i > 0) {
+              console.log();
             }
+            displayMadaAdmConfig(
+              `${num}.${isActiveSuffix}`,
+              existingConfigs[i],
+            );
           }
-          resetProvincesDDL(args.dbType);
-          resetRegionsDDL(args.dbType);
-          resetDistrictsDDL(args.dbType);
-          resetCommunesDDL(args.dbType);
-          resetFokontanysDDL(args.dbType);
+          console.log();
         }
-        const configPromptTitle = prevAdmConfigValues
-          ? colors.yellow(
-            `\nℹ️  Updating Mada ADM configuration values:`,
+
+        const admTablesExist = activeConfig
+          ? await this.checkAdmTablesExist(
+            activeConfig,
+            args.dbType,
+            db,
+            args.pgSchema,
           )
-          : colors.yellow(
-            `\nℹ️  No existing ADM configuration found. Please provide the configuration values:`,
-          );
-        console.log(configPromptTitle);
-        const result = await promptMadaAdmConfig();
-        const rawTablesPrefix = (result.tablesPrefix as string) ?? "";
-        const tablesPrefix = rawTablesPrefix.trim() || null;
-        activeAdmConfigValues = {
-          tablesPrefix,
-          isFkRepeated: result.isFkRepeated as boolean,
-          isProvinceRepeated: result.isProvinceRepeated as boolean,
-          isProvinceFkRepeated: result.isProvinceFkRepeated as boolean,
-          hasGeojson: result.hasGeojson as boolean,
-          hasAdmLevel: result.hasAdmLevel as boolean,
-        };
-        await madaAdmConfigDML.createOrUpdate(activeAdmConfigValues);
-        displayMadaAdmConfig(
-          "Active Mada ADM Configuration",
-          activeAdmConfigValues,
-        );
-      } else {
-        activeAdmConfigValues = {
-          tablesPrefix: prevAdmConfigValues!.tablesPrefix,
-          isFkRepeated: prevAdmConfigValues!.isFkRepeated,
-          isProvinceRepeated: prevAdmConfigValues!.isProvinceRepeated,
-          isProvinceFkRepeated: prevAdmConfigValues!.isProvinceFkRepeated,
-          hasGeojson: prevAdmConfigValues!.hasGeojson,
-          hasAdmLevel: prevAdmConfigValues!.hasAdmLevel,
-        };
-        displayMadaAdmConfig(
-          "Using existing Mada ADM Configuration",
-          activeAdmConfigValues,
-        );
-      }
-      const prevJobContext = await mediator.persistedContext;
-      provincesDDL = injectProvincesDDL(
-        activeAdmConfigValues,
-        args.dbType,
-        this.#db,
-        {
-          pgSchema: args.pgSchema,
-        },
-      );
-      regionsDDL = injectRegionsDDL(
-        activeAdmConfigValues,
-        args.dbType,
-        this.#db,
-        {
-          pgSchema: args.pgSchema,
-        },
-      );
-      districtsDDL = injectDistrictsDDL(
-        activeAdmConfigValues,
-        args.dbType,
-        this.#db,
-        {
-          pgSchema: args.pgSchema,
-        },
-      );
-      communesDDL = injectCommunesDDL(
-        activeAdmConfigValues,
-        args.dbType,
-        this.#db,
-        {
-          pgSchema: args.pgSchema,
-        },
-      );
-      fokontanysDDL = injectFokontanysDDL(
-        activeAdmConfigValues,
-        args.dbType,
-        this.#db,
-        {
-          pgSchema: args.pgSchema,
-        },
-      );
-      const admTablesExist = (await Promise.all([
-        regionsDDL.exists(),
-        provincesDDL.exists(),
-        districtsDDL.exists(),
-        communesDDL.exists(),
-        fokontanysDDL.exists(),
-      ])).every((exists) => exists);
-      let shouldClearJobContext = true;
-      let shouldClearDatabase = true;
-      if (
-        !shouldResetAdmConfig && !args.disableRedis && admTablesExist &&
-        prevJobContext
-      ) {
-        console.log(
-          colors.yellow(
-            "\nℹ️  Found previous job context.\nYou can choose to resume with it or clear it and restart fresh.",
-          ),
-        );
-        console.log(
-          colors.yellow(
-            "⚠️  WARNING: If you choose to resume, ensure that the input data has not been modified since the job was last interrupted.\nResuming with modified input data will result in an inconsistent database state.",
-          ),
-        );
-        const resume = await Confirm.prompt({
-          message: "Would you like to resume with the previous job context?",
-          default: false,
-        });
-        if (resume) {
-          shouldClearDatabase = false;
-          shouldClearJobContext = false;
-        }
-      }
-      if (shouldClearJobContext) {
-        console.log(colors.red("\nClearing job context..."));
-        await mediator.clearPersisted();
-        console.log(colors.green("Job context cleared successfully."));
-      }
-      if (shouldClearDatabase) {
-        const ddls = [
-          provincesDDL,
-          regionsDDL,
-          districtsDDL,
-          communesDDL,
-          fokontanysDDL,
-        ];
-        if (admTablesExist) {
+          : null;
+
+        prevJobContext = null;
+
+        if (activeConfig) {
+          if (!disableRedis && mediator instanceof RedisQueueWorkersMediator) {
+            prevJobContext = ((await mediator.persistedContext) as
+              | SeedAdmJobContext
+              | null) ?? null;
+          }
+
+          if (prevJobContext) {
+            console.log(
+              colors.yellow("ℹ️  Previous job context found in Redis.\n"),
+            );
+            const configMatchesContext = activeConfig !== null &&
+              compareMadaAdmConfigValues(prevJobContext.config, activeConfig);
+
+            if (configMatchesContext) {
+              console.log(
+                colors.yellow(
+                  "⚠️  An interrupted job matching the active configuration was found, and its ADM tables exist.\n",
+                ),
+              );
+              action = (await Select.prompt({
+                message: "Choose how to proceed with the job:",
+                options: [
+                  { name: "Resume the previous job", value: "resume" },
+                  {
+                    name:
+                      "Restart fresh with the active configuration (drops tables)",
+                    value: "continue",
+                  },
+                  { name: "Change the ADM configuration", value: "change" },
+                ],
+              })) as IndexAction;
+            } else {
+              console.log(
+                colors.yellow(
+                  "⚠️  The previous job's ADM configuration does not match the active ADM configuration.\n",
+                ),
+              );
+              console.log(
+                colors.yellow(
+                  "⚠️  To resume, you must activate an ADM configuration that matches the previous job. Otherwise, you can continue by clearing the previous job context and starting fresh.\n",
+                ),
+              );
+              action = (await Select.prompt({
+                message: "Choose action:",
+                options: [
+                  {
+                    name: "Start fresh with the active configuration",
+                    value: "continue",
+                  },
+                  { name: "Change the ADM configuration", value: "change" },
+                ],
+              })) as IndexAction;
+            }
+          } else {
+            action = (await Select.prompt({
+              message: "Choose action:",
+              options: [
+                {
+                  name: "Continue with the active configuration",
+                  value: "continue",
+                },
+                { name: "Change the ADM configuration", value: "change" },
+              ],
+            })) as IndexAction;
+          }
+        } else {
           console.log(
-            colors.yellow(
-              "\nThe current ADM tables are going to be dropped anyway because the job must always start with empty ADM tables.\nYou can choose to continue or abort the action now.",
+            colors.red(
+              "❌ No active ADM configuration found. Please create or activate a configuration first.",
             ),
           );
-          const userWantsToContinue = await Confirm.prompt({
-            message: "Continue and drop all the current Mada ADM tables?",
+          action = "change";
+        }
+        console.log();
+
+        // ── Branch on action ──────────────────────────────────────────────
+        if (action === "continue" && admTablesExist) {
+          console.log(
+            colors.yellow(
+              "⚠️  Continuing will drop the existing ADM tables for the active configuration and start seeding from scratch.\n",
+            ),
+          );
+          const confirmed = await Confirm.prompt({
+            message:
+              "Are you sure you want to drop existing ADM tables and continue?",
             default: true,
           });
-          if (!userWantsToContinue) {
-            console.log(colors.red("\nAborting the action."));
-            return;
+          console.log();
+          if (!confirmed) {
+            action = "abort";
           }
-          await this.#db.transaction(async (transactionContext) => {
-            console.log(colors.red("\nDeleting all Mada ADM tables..."));
-            for (const ddl of ddls.toReversed()) {
-              console.log(`Dropping the table ${ddl.tableName}...`);
-              await ddl.drop(transactionContext);
-            }
-            console.log(
-              colors.green("\nAll Mada ADM tables dropped successfully."),
-            );
-          }, DDL_TRANSACTION_OPTIONS);
         }
-        await this.#db.transaction(async (transactionContext) => {
-          console.log(colors.blue("\nCreating all Mada ADM tables..."));
-          for (const ddl of ddls) {
-            console.log(`Creating table ${ddl.tableName}...`);
-            await ddl.create(transactionContext);
+
+        if (action === "change") {
+          const nonActiveConfigs = existingConfigs.filter((c) => !c.isActive);
+          const changeConfigOptions: Record<"name" | "value", string>[] = [
+            { name: "Create a new configuration", value: "create" },
+          ];
+          if (existingConfigs.length > 0) {
+            changeConfigOptions.push({
+              name: "Update an existing configuration",
+              value: "update",
+            });
           }
-          console.log(
-            colors.green("\nAll Mada ADM tables created successfully."),
-          );
-        }, DDL_TRANSACTION_OPTIONS);
+          if (nonActiveConfigs.length > 0) {
+            changeConfigOptions.push({
+              name: "Switch active configuration",
+              value: "switch",
+            });
+          }
+
+          const changeConfigAction = (await Select.prompt({
+            message: "Choose how to change the ADM configuration:",
+            options: changeConfigOptions,
+          })) as ChangeConfigAction;
+          console.log();
+
+          let newConfig: MadaAdmConfigValues | MadaAdmConfig | null = null;
+          let postInputAction: PostInputAction = "continue";
+
+          if (
+            changeConfigAction === "create" ||
+            changeConfigAction === "update"
+          ) {
+            let duplicateConfig: MadaAdmConfig | null = null;
+            let updatedConfig: MadaAdmConfig | null = null;
+
+            if (changeConfigAction === "update") {
+              const configIdByChoice = new Map<number, EntityId>();
+              for (let i = 0; i < existingConfigs.length; i++) {
+                configIdByChoice.set(i + 1, existingConfigs[i].id);
+              }
+              const chosenStr = await Select.prompt({
+                message: "Select configuration to update:",
+                options: existingConfigs.map((_, i) => String(i + 1)),
+              });
+              const targetId = configIdByChoice.get(Number(chosenStr))!;
+              updatedConfig = existingConfigs.find((c) => c.id === targetId)!;
+              console.log();
+            }
+
+            while (true) {
+              console.log(
+                colors.yellow(
+                  changeConfigAction === "create"
+                    ? "ℹ️  Creating a new Mada ADM configuration:"
+                    : `ℹ️  Updating configuration #${
+                      existingConfigs.indexOf(updatedConfig!) + 1
+                    }:`,
+                ),
+              );
+              const promptResult = await promptMadaAdmConfig(
+                updatedConfig ?? undefined,
+              );
+              const rawTablesPrefix = (promptResult.tablesPrefix as string) ??
+                "";
+              const tablesPrefix = rawTablesPrefix.trim() || null;
+              console.log();
+
+              newConfig = {
+                tablesPrefix,
+                isFkRepeated: promptResult.isFkRepeated as boolean,
+                isProvinceRepeated: promptResult.isProvinceRepeated as boolean,
+                isProvinceFkRepeated: promptResult
+                  .isProvinceFkRepeated as boolean,
+                hasGeojson: promptResult.hasGeojson as boolean,
+                hasAdmLevel: promptResult.hasAdmLevel as boolean,
+              };
+
+              const isPrefixEqualAndDifferent = activeConfig !== null &&
+                newConfig.tablesPrefix === activeConfig.tablesPrefix &&
+                !compareMadaAdmConfigValues(newConfig, activeConfig);
+
+              if (isPrefixEqualAndDifferent) {
+                console.log(
+                  colors.yellow(
+                    "⚠️  The selected configuration uses the same table prefix as the active configuration. Continuing will drop the current ADM tables. Otherwise, retry with a different configuration or abort.\n",
+                  ),
+                );
+                postInputAction = (await Select.prompt({
+                  message: "Choose action:",
+                  options: [
+                    { name: "Continue", value: "continue" },
+                    {
+                      name: "Retry (input different settings)",
+                      value: "retry",
+                    },
+                    { name: "Abort", value: "abort" },
+                  ],
+                })) as PostInputAction;
+                console.log();
+              } else {
+                postInputAction = "continue";
+              }
+
+              if (postInputAction !== "retry") {
+                break;
+              }
+            }
+
+            if (postInputAction === "continue" && newConfig) {
+              duplicateConfig = await madaAdmConfigDML.getExact(newConfig);
+
+              await db.transaction(async (txCtx) => {
+                let deactivateConfig = true;
+                if (duplicateConfig) {
+                  if (duplicateConfig.isActive) {
+                    deactivateConfig = false;
+                  }
+                } else {
+                  if (activeConfig === null) {
+                    deactivateConfig = false;
+                  }
+                }
+
+                if (deactivateConfig && activeConfig !== null) {
+                  await madaAdmConfigDML.deactivate(activeConfig.id, txCtx);
+                }
+
+                if (duplicateConfig) {
+                  if (!duplicateConfig.isActive) {
+                    await madaAdmConfigDML.setActive(
+                      duplicateConfig.id,
+                      txCtx,
+                    );
+                  }
+                  newConfig = duplicateConfig;
+                } else {
+                  if (changeConfigAction === "create") {
+                    const inserted = await madaAdmConfigDML.insert(
+                      newConfig as MadaAdmConfigValues,
+                      true,
+                      txCtx,
+                    );
+                    newConfig = inserted;
+                  } else {
+                    const updated = await madaAdmConfigDML.update(
+                      updatedConfig!.id,
+                      {
+                        ...(newConfig as MadaAdmConfigValues),
+                        isActive: true,
+                      },
+                      txCtx,
+                    );
+                    newConfig = updated;
+                  }
+                }
+              });
+            }
+          } else if (changeConfigAction === "switch") {
+            let switchedConfig!: MadaAdmConfig;
+
+            while (true) {
+              const currentNonActive = existingConfigs.filter(
+                (c) => !c.isActive,
+              );
+              const chosenStr = await Select.prompt({
+                message: "Select an ADM configuration to activate:",
+                options: currentNonActive.map((c) => {
+                  const num = existingConfigs.indexOf(c) + 1;
+                  return {
+                    name: `#${num} (Tables prefix: ${
+                      c.tablesPrefix !== null ? `"${c.tablesPrefix}"` : "None"
+                    })`,
+                    value: String(num),
+                  };
+                }),
+              });
+              const selectedConfigId =
+                currentNonActive[Number(chosenStr) - 1].id;
+              switchedConfig = existingConfigs.find(
+                (c) => c.id === selectedConfigId,
+              )!;
+              console.log();
+
+              const isPrefixEqual = activeConfig !== null &&
+                switchedConfig.tablesPrefix === activeConfig.tablesPrefix;
+
+              if (isPrefixEqual) {
+                console.log(
+                  colors.yellow(
+                    "⚠️  The selected configuration uses the same table prefix as the active configuration. Continuing will drop the current ADM tables. Otherwise, retry with a different configuration or abort.\n",
+                  ),
+                );
+                postInputAction = (await Select.prompt({
+                  message: "Choose action:",
+                  options: [
+                    { name: "Continue", value: "continue" },
+                    {
+                      name: "Retry (pick another configuration)",
+                      value: "retry",
+                    },
+                    { name: "Abort", value: "abort" },
+                  ],
+                })) as PostInputAction;
+                console.log();
+              } else {
+                postInputAction = "continue";
+              }
+
+              if (postInputAction !== "retry") {
+                break;
+              }
+            }
+
+            if (postInputAction === "continue") {
+              await db.transaction(async (txCtx) => {
+                if (activeConfig !== null) {
+                  await madaAdmConfigDML.deactivate(activeConfig.id, txCtx);
+                }
+                await madaAdmConfigDML.setActive(switchedConfig.id, txCtx);
+              });
+              newConfig = switchedConfig;
+            }
+          }
+
+          if (postInputAction === "abort") {
+            action = "abort";
+          } else if (
+            postInputAction === "continue" &&
+            newConfig !== null &&
+            activeConfig !== null
+          ) {
+            const isConfigDifferent = !compareMadaAdmConfigValues(
+              newConfig,
+              activeConfig,
+            );
+            if (isConfigDifferent) {
+              let dropAdmTables = true;
+              if (newConfig.tablesPrefix !== activeConfig.tablesPrefix) {
+                dropAdmTables = await Confirm.prompt({
+                  message:
+                    `Drop the ADM tables built with the previous active configuration (Tables prefix: ${
+                      activeConfig.tablesPrefix
+                        ? `"${activeConfig.tablesPrefix}"`
+                        : "None"
+                    })?`,
+                  default: false,
+                });
+                console.log();
+              }
+
+              if (dropAdmTables) {
+                console.log(
+                  colors.yellow(
+                    `🗑️ Dropping ADM tables with ${
+                      activeConfig.tablesPrefix
+                        ? `prefix as "${activeConfig.tablesPrefix}"`
+                        : "no prefix"
+                    }...`,
+                  ),
+                );
+                const configToDrop = activeConfig;
+                await db.transaction(async (txCtx) => {
+                  await this.dropAdmTables(
+                    configToDrop,
+                    args.dbType,
+                    db,
+                    args.pgSchema,
+                    txCtx,
+                  );
+                }, DDL_TRANSACTION_OPTIONS);
+              }
+            }
+          }
+        }
+      } while (action === "change");
+
+      if (action === "abort") {
+        console.log(colors.gray("ℹ️  Pipeline execution cancelled.\n"));
+        return;
       }
-      const jobContext: SeedAdmJobContext = !shouldClearJobContext
-        ? prevJobContext!
-        : {
-          config: activeAdmConfigValues,
+
+      if (action !== "resume") {
+        if (activeConfig) {
+          const tablesExist = await this.checkAdmTablesExist(
+            activeConfig,
+            args.dbType,
+            db,
+            args.pgSchema,
+          );
+          if (!tablesExist) {
+            console.log(
+              colors.yellow(
+                `🏗️ Creating ADM tables with ${
+                  activeConfig.tablesPrefix
+                    ? `"${activeConfig.tablesPrefix}" prefix`
+                    : "no prefix"
+                } ...`,
+              ),
+            );
+            await db.transaction(async (txCtx) => {
+              await this.createAdmTables(
+                activeConfig,
+                args.dbType,
+                db,
+                args.pgSchema,
+                txCtx,
+              );
+            }, DDL_TRANSACTION_OPTIONS);
+          }
+        }
+
+        if (prevJobContext && mediator instanceof RedisQueueWorkersMediator) {
+          console.log(
+            colors.yellow("🧹 Clearing previous job context from Redis..."),
+          );
+          await mediator.clearPersisted();
+          prevJobContext = null;
+          console.log(
+            colors.green.bold(
+              "✅ Previous job context cleared successfully.\n",
+            ),
+          );
+        }
+      }
+
+      const jobContext: SeedAdmJobContext =
+        action === "resume" && prevJobContext ? prevJobContext : {
+          config: activeConfig!,
           currentAdmLevel: AdmLevelCode.PROVINCE,
           dbConnectionParams: this.#db.params,
           jobTimestamp: Date.now(),
@@ -1131,73 +1455,12 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
       )!;
 
       const startTime = Date.now();
+      const progressRenderer = !args.cliDebug
+        ? injectAdmIntegrationProgressRenderer()
+        : null;
 
       let processingCounter = 0;
       let insertCounter = 0;
-      let totalCountForLevel = 0;
-      let currentLevelTitle = "";
-      let isFirstProgressBarRender = true;
-
-      const renderProgressBars = () => {
-        try {
-          const { columns } = Deno.consoleSize();
-          const barWidth = Math.max(10, columns - 50);
-
-          if (!isFirstProgressBarRender) {
-            Deno.stdout.writeSync(
-              new TextEncoder().encode(
-                ansi.cursorUp(PROGRESS_BARS_LINES_COUNT).eraseDown().toString(),
-              ),
-            );
-          }
-          isFirstProgressBarRender = false;
-
-          const renderBar = (
-            count: number,
-            total: number,
-            label: string,
-            colorFn: (s: string) => string,
-          ) => {
-            const actualCount = Math.min(count, total); // To account for overflows from DLQs
-            const percentage = total > 0
-              ? Math.floor((actualCount / total) * 100)
-              : 0;
-            const filledWidth = Math.floor((percentage / 100) * barWidth);
-            const bar = colorFn("█".repeat(filledWidth)) +
-              colors.gray("░".repeat(barWidth - filledWidth));
-
-            console.log(
-              `${count.toLocaleString()} ${currentLevelTitle}s ${label} / ${total.toLocaleString()} (${percentage}%)`,
-            );
-            console.log(`[${bar}]`);
-          };
-
-          console.log(""); // Empty line at top
-          renderBar(
-            processingCounter,
-            totalCountForLevel,
-            "processed",
-            colors.magenta,
-          );
-          renderBar(
-            insertCounter,
-            totalCountForLevel,
-            "inserted",
-            colors.blue,
-          );
-        } catch (_e) {
-          // Ignore errors if terminal is not available or too small
-        }
-      };
-
-      let resizeTimeout: ReturnType<typeof setTimeout> | undefined;
-      const onResize = () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          renderProgressBars();
-        }, 100);
-      };
-      Deno.addSignalListener("SIGWINCH", onResize);
 
       try {
         for (
@@ -1211,59 +1474,38 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
           const admDataTotalCount = ADM_LEVEL_ENTRIES_COUNT_BY_CODE.get(
             admLevelCode,
           )!;
-          totalCountForLevel = admDataTotalCount;
-          currentLevelTitle = levelTitle;
-          const pulledCounts = await mediator.pulledMessagesCount;
-          processingCounter = pulledCounts.processed;
-          insertCounter = pulledCounts.inserted;
-          isFirstProgressBarRender = true;
+          processingCounter = 0;
+          insertCounter = 0;
 
           console.log(
             colors.rgb8(
-              `\nADM level: ${levelTitle} (${admDataTotalCount} entries)\n`,
+              `ADM level: ${levelTitle} (${admDataTotalCount} entries)\n`,
               0x27be8c,
             ),
           );
 
           jobContext.currentAdmLevel = admLevelCode;
-          console.log(
-            colors.cyan("\n📑 Current job context:\n"),
-            JSON.stringify(jobContext, null, 2),
-            "\n",
-          );
-
-          let inputReadableStream: ReadableStream<AdmValues>;
-          if (await mediator.isJobEnded) {
-            inputReadableStream = new ReadableStream({
-              start(controller) {
-                controller.close();
-              },
-            });
-          } else {
-            const inputFilePathItems: string[] = [];
-            if (import.meta.dirname) {
-              inputFilePathItems.push(import.meta.dirname, "../");
-            } else {
-              inputFilePathItems.push(Deno.cwd());
-            }
-            inputFilePathItems.push(
-              ADM_SEEDING_INPUTS_DIR,
-              ADM_SEEDING_INPUT_FILENAMES_BY_CODE.get(admLevelCode)!,
+          if (args.cliDebug) {
+            console.log(
+              colors.cyan("Current job context:\n"),
+              JSON.stringify(jobContext, null, 2),
             );
-            const inputFilePath = path.join(...inputFilePathItems);
-            const lastPersistedMessage = await mediator.persistedLastMessage;
-            if (lastPersistedMessage) {
-              console.log(
-                `\n${
-                  colors.yellow(
-                    `Skipping messages from the input file until the following message is found:`,
-                  )
-                }`,
-                JSON.stringify(lastPersistedMessage).slice(0, 255),
-              );
-            }
-            let shouldSkipMessage = !!lastPersistedMessage;
-            inputReadableStream = (await Deno.open(inputFilePath))
+            console.log();
+          }
+
+          const inputFilePathItems: string[] = [];
+          if (import.meta.dirname) {
+            inputFilePathItems.push(import.meta.dirname, "../");
+          } else {
+            inputFilePathItems.push(Deno.cwd());
+          }
+          inputFilePathItems.push(
+            ADM_SEEDING_INPUTS_DIR,
+            ADM_SEEDING_INPUT_FILENAMES_BY_CODE.get(admLevelCode)!,
+          );
+          const inputFilePath = path.join(...inputFilePathItems);
+          const inputReadableStream: ReadableStream<AdmValues> =
+            (await Deno.open(inputFilePath))
               .readable
               .pipeThrough(new TextDecoderStream())
               .pipeThrough(new TextLineStream())
@@ -1271,17 +1513,10 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
                 new TransformStream<string, AdmValues>({
                   transform(chunk, controller) {
                     const admValues = JSON.parse(chunk.trim()) as AdmValues;
-                    if (lastPersistedMessage && shouldSkipMessage) {
-                      if (compareAdmValues(admValues, lastPersistedMessage)) {
-                        shouldSkipMessage = false;
-                      }
-                      return;
-                    }
                     controller.enqueue(admValues);
                   },
                 }),
               );
-          }
 
           const disableRedisUrlSearch = `disable-redis=${args.disableRedis}`;
           const processingWorkerURL = new URL(
@@ -1315,44 +1550,91 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
             insert: jobContext,
           };
 
-          renderProgressBars();
+          progressRenderer?.start(admLevelCode);
 
           await mediator.queue(mediatorContext, inputReadableStream, workers, {
             debug: args.cliDebug,
             batchSize: args.queueBatchSize,
+            totalCount: ADM_LEVEL_ENTRIES_COUNT_BY_CODE.get(admLevelCode)!,
             maxRetries: args.queueMaxRetries,
             onProcessingFinished: (payloads: AdmRecord[]) => {
-              for (const payload of payloads) {
-                const name = this.getAdmNameWithContext(payload);
-                console.log(
-                  ansi.cursorUp(PROGRESS_BARS_LINES_COUNT) +
-                    "\x1b[1L" +
+              if (progressRenderer) {
+                const lines = payloads.map((payload) => {
+                  const name = this.getAdmNameWithContext(payload);
+                  return `✅ Processed ${levelTitle}: ${name}`;
+                });
+                progressRenderer.updateLogs(lines);
+              } else {
+                for (const payload of payloads) {
+                  const name = this.getAdmNameWithContext(payload);
+                  console.log(
                     ansi.cursorLeft +
-                    `✅ Processed ${levelTitle}: ${name}` +
-                    ansi.cursorDown(PROGRESS_BARS_LINES_COUNT),
-                );
+                      `✅ Processed ${levelTitle}: ${name}`,
+                  );
+                }
               }
               processingCounter += payloads.length;
-              renderProgressBars();
             },
-            onInsertFinished: (payloads: AdmRecord[]) => {
-              for (const payload of payloads) {
-                const name = this.getAdmNameWithContext(payload);
+            onProcessingProgress: ({ progress, current, total }) => {
+              if (progressRenderer) {
+                progressRenderer.updateProgressBar("processing", current);
+              } else {
                 console.log(
-                  ansi.cursorUp(PROGRESS_BARS_LINES_COUNT) +
-                    "\x1b[1L" +
-                    ansi.cursorLeft +
-                    `💾 Inserted ${levelTitle}: ${name}` +
-                    ansi.cursorDown(PROGRESS_BARS_LINES_COUNT),
+                  `📈 Progress [PROCESSING] : ${current.toLocaleString()} / ${total.toLocaleString()} (${
+                    Number((progress * 100).toFixed(1))
+                  }%)`,
                 );
               }
+            },
+            onProcessingLog: (lines) => {
+              if (progressRenderer) {
+                progressRenderer.updateLogs(lines);
+              } else {
+                console.log(lines.join("\n"));
+              }
+            },
+            onInsertFinished: (payloads: AdmRecord[]) => {
+              if (progressRenderer) {
+                const lines = payloads.map((payload) => {
+                  const name = this.getAdmNameWithContext(payload);
+                  return `💾 Inserted ${levelTitle}: ${name}`;
+                });
+                progressRenderer.updateLogs(lines);
+              } else {
+                for (const payload of payloads) {
+                  const name = this.getAdmNameWithContext(payload);
+                  console.log(
+                    ansi.cursorLeft +
+                      `💾 Inserted ${levelTitle}: ${name}`,
+                  );
+                }
+              }
               insertCounter += payloads.length;
-              renderProgressBars();
+            },
+            onInsertProgress: ({ current, total, progress }) => {
+              if (progressRenderer) {
+                progressRenderer.updateProgressBar("insert", current);
+              } else {
+                console.log(
+                  `📈 Progress [INSERT] : ${current.toLocaleString()} / ${total.toLocaleString()} (${
+                    Number((progress * 100).toFixed(1))
+                  }%)`,
+                );
+              }
+            },
+            onInsertLog: (lines) => {
+              if (progressRenderer) {
+                progressRenderer.updateLogs(lines);
+              } else {
+                console.log(lines.join("\n"));
+              }
             },
           });
 
-          console.log(`\n🧹 Deleting duplicates for ${levelTitle}...`);
-          const dmlArgs = [activeAdmConfigValues, args.dbType, this.#db, {
+          progressRenderer?.stop();
+
+          console.log(`🧹 Deleting duplicates for ${levelTitle}...`);
+          const dmlArgs = [jobContext.config, args.dbType, this.#db, {
             pgSchema: args.pgSchema,
           }] as const;
           const tableDML = admLevelCode === AdmLevelCode.PROVINCE
@@ -1367,45 +1649,45 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
 
           await tableDML.deleteDuplicates();
           console.log(
-            colors.green(`✅ Duplicates removed for ${levelTitle}.`),
+            colors.green(`✅ Duplicates removed for ${levelTitle}.\n`),
           );
 
           // Cleanup for this level
           for (const w of processingWorkers) w.terminate();
           insertWorker?.terminate();
-          await mediator.clearQueue();
+          if (mediator instanceof RedisQueueWorkersMediator) {
+            await mediator.clearPersisted();
+          }
         }
-
-        // Final Cleanup
-        Deno.removeSignalListener("SIGWINCH", onResize);
-        await mediator.clearPersisted();
 
         console.log(
           colors.green(
-            "\n🏁 Mada ADM data seeding process completed successfully.",
+            "🏁 Mada ADM data seeding process completed successfully.\n",
           ),
         );
       } catch (error) {
-        console.error(`❌ Fatal Error: ${(error as Error).message}`);
+        progressRenderer?.stop();
+        console.error(`❌ Fatal Error: ${(error as Error).message}\n`);
       } finally {
+        progressRenderer?.stop();
         const totalDurationMs = Date.now() - startTime;
         console.log(
-          `\n⏱️  Total duration: ${
-            DateUtils.formatDuration(totalDurationMs)
-          }\n`,
+          `⏱️  Total duration: ${DateUtils.formatDuration(totalDurationMs)}\n`,
         );
       }
     } catch (error) {
-      console.error(`\n❌ Fatal Error: ${(error as Error).message}`);
+      console.error(`❌ Fatal Error: ${(error as Error).message}\n`);
     } finally {
       if (redis) {
         redis.close();
         console.log(
-          colors.gray("\n🔌 Redis connection closed successfully...\n"),
+          colors.gray("🔌 Redis connection closed successfully...\n"),
         );
       }
       await this.#db.close();
-      console.log(colors.gray("🔌 Database connection closed successfully..."));
+      console.log(
+        colors.gray("🔌 Database connection closed successfully...\n"),
+      );
     }
   }
 }

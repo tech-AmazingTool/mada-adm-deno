@@ -38,8 +38,12 @@ export type MadaAdmConfigValues = {
   hasGeojson: boolean;
   /** Indicates whether the tables include an admLevel column natively. */
   hasAdmLevel: boolean;
+  /** Indicates whether this configuration is currently active. */
+  isActive?: boolean;
 };
-export type MadaAdmConfigBSONRecord = MadaAdmConfigValues;
+export type MadaAdmConfigBSONRecord = MadaAdmConfigValues & {
+  isActive: boolean;
+};
 export type MadaAdmConfigBSONRecordWithTimestamps = WithTimestamps<
   MadaAdmConfigBSONRecord
 >;
@@ -54,6 +58,7 @@ export type MadaAdmConfigSnakeCased = EntitySnakeCased<{
   is_province_fk_repeated: boolean;
   has_geojson: boolean;
   has_adm_level: boolean;
+  is_active: boolean;
 }>;
 
 /**
@@ -64,7 +69,9 @@ export type MadaAdmConfigBSON = WithId<MadaAdmConfigBSONRecordWithTimestamps>;
 /**
  * The standard application entity wrapper for MadaAdmConfig.
  */
-export type MadaAdmConfig = Entity<MadaAdmConfigValues>;
+export type MadaAdmConfig = Entity<MadaAdmConfigValues> & {
+  isActive: boolean;
+};
 
 export type AdmProperties = {
   shapeName: string;

@@ -300,8 +300,113 @@ export interface DMLCreateManyResult {
  * Data Manipulation Layer interface for the mada adm config table.
  */
 export interface MadaAdmConfigDML {
-  get(): MaybePromise<MadaAdmConfig | null>;
-  createOrUpdate(values: MadaAdmConfigValues): MaybePromise<MadaAdmConfig>;
+  /**
+   * Retrieves the currently active MadaAdmConfig record.
+   *
+   * @param transactionContext - Optional database transaction context.
+   */
+  get(
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig | null>;
+
+  /**
+   * Retrieves all MadaAdmConfig records.
+   *
+   * @param transactionContext - Optional database transaction context.
+   */
+  getAll(
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig[]>;
+
+  /**
+   * Retrieves an exact matching MadaAdmConfig record by its configuration values.
+   *
+   * @param values - The configuration values to match.
+   * @param transactionContext - Optional database transaction context.
+   */
+  getExact(
+    values: MadaAdmConfigValues,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig | null>;
+
+  /**
+   * Inserts a new MadaAdmConfig record.
+   *
+   * @param values - The configuration values.
+   * @param isActive - Whether to set this record as active. Defaults to true.
+   * @param transactionContext - Optional database transaction context.
+   */
+  insert(
+    values: MadaAdmConfigValues,
+    isActive?: boolean,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig>;
+
+  /**
+   * Updates an existing MadaAdmConfig record by its ID.
+   *
+   * @param id - The ID of the configuration to update.
+   * @param values - The partial configuration values to update.
+   * @param transactionContext - Optional database transaction context.
+   */
+  update(
+    id: EntityId,
+    values: Partial<MadaAdmConfigValues>,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig>;
+
+  /**
+   * Marks a specific configuration as active, and deactivates all others.
+   *
+   * @param id - The ID of the configuration to activate.
+   * @param transactionContext - Optional database transaction context.
+   */
+  setActive(
+    id: EntityId,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig>;
+
+  /**
+   * Deactivates the specified configuration record, or the currently active configuration if omitted.
+   *
+   * @param id - Optional ID of the configuration to deactivate.
+   * @param transactionContext - Optional database transaction context.
+   */
+  deactivate(
+    id?: EntityId,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<void>;
+
+  /**
+   * Deletes a MadaAdmConfig record by its ID.
+   *
+   * @param id - The ID of the configuration to delete.
+   * @param transactionContext - Optional database transaction context.
+   */
+  delete(
+    id: EntityId,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<void>;
+
+  /**
+   * Deletes all MadaAdmConfig records from the table.
+   *
+   * @param transactionContext - Optional database transaction context.
+   */
+  deleteAll(
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<void>;
+
+  /**
+   * Creates or updates the Mada ADM configuration.
+   *
+   * @param values - The configuration values.
+   * @param transactionContext - Optional database transaction context.
+   */
+  createOrUpdate(
+    values: MadaAdmConfigValues,
+    transactionContext?: DbTransactionContext,
+  ): MaybePromise<MadaAdmConfig>;
 }
 
 /**

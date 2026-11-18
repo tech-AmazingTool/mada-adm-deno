@@ -256,12 +256,12 @@ export const CLI_LARGE_CONTENT_ARGS_DIR = "commands/.args";
 
 export const CLI_VALUE_ARG_FILE = "value.txt";
 
-// Set config command
+// Manage configs command
 
-export const SET_CONFIG_COMMAND_NAME = "set-config";
+export const MANAGE_CONFIGS_COMMAND_NAME = "manage-config";
 
-export const SET_CONFIG_COMMAND_DESCRIPTION =
-  "Interactively sets or updates the Mada ADM configuration stored in the database.";
+export const MANAGE_CONFIGS_COMMAND_DESCRIPTION =
+  "Interactively manages Mada ADM configurations stored in the database.";
 
 // Clear command
 

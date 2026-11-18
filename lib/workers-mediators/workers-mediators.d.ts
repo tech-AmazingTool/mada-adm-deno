@@ -27,6 +27,18 @@ export type WorkerBatchContext<TProcessing, TInsert> =
   };
 
 /**
+ * Progress data emitted by the workers after successful batch processing completions.
+ */
+export type WorkerBatchProcessingProgress = {
+  /** Count of messages that have been successfully processed so far */
+  current: number;
+  /** Total count of messages to be processed */
+  total: number;
+  /** Processing progress rate between 0 and 1 */
+  progress: number;
+};
+
+/**
  * Optional listeners for monitoring the queue execution.
  */
 export interface QueueListeners<
@@ -37,8 +49,20 @@ export interface QueueListeners<
   onProcessingFinished?: (
     payload: TProcessingFinishedPayload[],
   ) => MaybePromise<void>;
+  /** Invoked when a the prossessing job has progressed */
+  onProcessingProgress?: (
+    data: WorkerBatchProcessingProgress,
+  ) => MaybePromise<void>;
+  /** Forwards the lines of console logs from the processing worker */
+  onProcessingLog?: (lines: string[]) => MaybePromise<void>;
   /** Invoked when an insert task has completed. */
   onInsertFinished?: (payload: TInsertFinishedPayload[]) => MaybePromise<void>;
+  /** Invoked when a the insert job has progressed */
+  onInsertProgress?: (
+    data: WorkerBatchProcessingProgress,
+  ) => MaybePromise<void>;
+  /** Forwards the lines of console logs from the insert worker */
+  onInsertLog?: (lines: string[]) => MaybePromise<void>;
 }
 
 /**
@@ -48,6 +72,8 @@ export interface QueueOptions<
   TProcessingFinished = unknown,
   TInsertFinished = unknown,
 > extends QueueListeners<TProcessingFinished, TInsertFinished> {
+  /** Total count of messages */
+  totalCount?: number;
   /** The batch size for processing messages concurrently. */
   batchSize?: number;
   /** Maximum number of retries per batch in case of an error. */
@@ -95,40 +121,6 @@ export interface QueueWorkersMediator<
     workers: WorkerPool,
     options?: QueueOptions<TProcessingFinishedPayload, TInsertFinishedPayload>,
   ): Promise<void>;
-
-  /**
-   * Retrieves the persisted context data for the processing stage.
-   */
-  get persistedContext(): MaybePromise<TProcessingContext | null>;
-
-  /**
-   * Retrieves the last processing message that was processed or added.
-   */
-  get persistedLastMessage(): MaybePromise<TMessage | null>;
-
-  /**
-   * Clears ONLY the queue-related data (including streams and DLQs) from
-   * previous operations, preserving the context and last message keys.
-   */
-  clearQueue(): MaybePromise<void>;
-
-  /**
-   * Clears ALL persisted data from previous operations, including context
-   * and last processed message trackers.
-   */
-  clearPersisted(): MaybePromise<void>;
-
-  /**
-   * Checks if the job has already ended in a previous session.
-   */
-  get isJobEnded(): MaybePromise<boolean>;
-
-  /**
-   * Retrieves the count of messages that have been pulled (dequeued) so far.
-   */
-  get pulledMessagesCount(): MaybePromise<
-    { processed: number; inserted: number }
-  >;
 }
 
 export interface QueueWorkerLifecycle<
@@ -140,6 +132,7 @@ export interface QueueWorkerLifecycle<
   init?: (
     context: TContext,
     options: { workerMetadata: { type: "process" | "insert"; index: number } },
+    log: (...lines: string[]) => void,
   ) => MaybePromise<void>;
   /** Required callback executed for each batch of messages. */
   execute: (
@@ -149,11 +142,13 @@ export interface QueueWorkerLifecycle<
       retryCount: number;
       workerMetadata: { type: "process" | "insert"; index: number };
     },
+    log: (...lines: string[]) => void,
   ) => MaybePromise<TFinishedPayload[] | void>;
   /** Optional callback executed after all messages have been processed or on error. */
   teardown?: (
     context: TContext,
     options: { workerMetadata: { type: "process" | "insert"; index: number } },
+    log: (...lines: string[]) => void,
   ) => MaybePromise<void>;
 }
 
