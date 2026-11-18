@@ -11,7 +11,9 @@
     "http-status-codes": "npm:http-status-codes@^2.3.0"
   },
   "tasks": {
-    "start": "deno run -N -R -W -E -S --allow-ffi --env-file=\"../.env\" --watch main.ts"
+    "dev": "deno run -N -R -W -E -S --allow-ffi --env-file=\"../.env\" --watch main.ts",
+    "build": "deno bundle main.ts > ./build/rest-api.bundle.js",
+    "start": "deno run -N -R -W -E -S --allow-ffi --env-file=\"../.env\" ./build/rest-api.bundle.js"
   },
   "compilerOptions": {
     "jsx": "precompile",

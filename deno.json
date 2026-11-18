@@ -17,6 +17,8 @@
     "map-viewer:dev": "cd ./map-viewer && deno task dev",
     "map-viewer:build": "cd ./map-viewer && deno task build",
     "map-viewer:start": "cd ./map-viewer && deno task start",
+    "rest-api:dev": "cd ./rest-api && deno task dev",
+    "rest-api:build": "cd ./rest-api && deno task build",
     "rest-api:start": "cd ./rest-api && deno task start",
     "extract-adm-inputs": "deno run --allow-env --allow-net --allow-read --allow-write --env scripts/extract-adm-inputs/extract-adm-inputs.script.ts",
     "generate-catalogs": "deno run -R -W ./scripts/generate-data-catalogs.script.ts",
