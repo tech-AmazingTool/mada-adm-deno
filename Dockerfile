@@ -1,12 +1,8 @@
-FROM denoland/deno:debian
+FROM denoland/deno:alpine-2.9.8
 
 # Install SpatiaLite
-RUN apt-get update && apt-get install -y \
-    libsqlite3-mod-spatialite \
-    spatialite-bin \
-    libspatialite-dev \
-    sqlite3 \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache sqlite libspatialite \
+    && ln -s /usr/lib/mod_spatialite.so.8 /usr/lib/mod_spatialite.so
 
 WORKDIR /app
 
