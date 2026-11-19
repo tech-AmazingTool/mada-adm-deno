@@ -1279,7 +1279,7 @@ export class CliIndexCommand extends Command<GlobalCliConfig, void> {
               const chosenStr = await Select.prompt({
                 message: "Select an ADM configuration to activate:",
                 options: currentNonActive.map((c) => {
-                  const num = existingConfigs.indexOf(c) + 1;
+                  const num = currentNonActive.indexOf(c) + 1;
                   return {
                     name: `#${num} (Tables prefix: ${
                       c.tablesPrefix !== null ? `"${c.tablesPrefix}"` : "None"
