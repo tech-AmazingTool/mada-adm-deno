@@ -33,7 +33,7 @@ export default function AppMapManualCoordinatesEntryFAB() {
     : "";
 
   function handleFABClick() {
-    titleInputValue.value = "";
+    titleInputValue.value = pinnedLocationsStore.getNextUntitledLocationTitle();
     titleInputWasTouched.value = false;
     coordinatesInputValue.value = "";
     coordinatesInputWasTouched.value = false;
@@ -75,7 +75,7 @@ export default function AppMapManualCoordinatesEntryFAB() {
   return (
     <div>
       <div
-        className="tooltip tooltip-left"
+        class="tooltip tooltip-left"
         data-tip="Enter geographic coordinates"
       >
         <button
@@ -106,27 +106,6 @@ export default function AppMapManualCoordinatesEntryFAB() {
             <div class="space-y-2">
               <fieldset class="fieldset">
                 <label
-                  for="fab-manual-coordinates-title"
-                  class="label text-base-content/90"
-                >
-                  Title
-                </label>
-                <input
-                  type="text"
-                  id="fab-manual-coordinates-title"
-                  class={`input w-full ${titleInputBorderColorClassName}`}
-                  placeholder="Title of the pinned location"
-                  value={titleInputValue}
-                  onInput={handleTitleInputChange}
-                />
-                {titleHasError && (
-                  <p class="label text-error">
-                    The pinned location title must not be empty.
-                  </p>
-                )}
-              </fieldset>
-              <fieldset class="fieldset">
-                <label
                   for="fab-manual-coordinates-value"
                   class="label text-base-content/90"
                 >
@@ -145,6 +124,27 @@ export default function AppMapManualCoordinatesEntryFAB() {
                     {coordinatesInputError.value
                       ? "Could not parse the coordinates being entered"
                       : "The coordinates must not be empty."}
+                  </p>
+                )}
+              </fieldset>
+              <fieldset class="fieldset">
+                <label
+                  for="fab-manual-coordinates-title"
+                  class="label text-base-content/90"
+                >
+                  Title
+                </label>
+                <input
+                  type="text"
+                  id="fab-manual-coordinates-title"
+                  class={`input w-full ${titleInputBorderColorClassName}`}
+                  placeholder="Title of the pinned location"
+                  value={titleInputValue}
+                  onInput={handleTitleInputChange}
+                />
+                {titleHasError && (
+                  <p class="label text-error">
+                    The pinned location title must not be empty.
                   </p>
                 )}
               </fieldset>
