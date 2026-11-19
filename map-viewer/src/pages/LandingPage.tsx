@@ -41,7 +41,7 @@ export default function LandingPage() {
           {" "}
           as a part of the{" "}
           <a
-            href="https://github.com/AmazingTool777-911/madagascar-administrative-boundaries"
+            href="https://github.com/tech-AmazingTool/madagascar-administrative-boundaries"
             target="_blank"
             class="link link-primary"
           >
@@ -59,7 +59,7 @@ export default function LandingPage() {
             Explore data
           </button>
           <a
-            href="https://github.com/AmazingTool777-911/mada-adm-deno/tree/main/map-viewer"
+            href="https://github.com/tech-AmazingTool/mada-adm-deno/tree/main/map-viewer"
             target="_blank"
             className="btn btn-neutral"
           >

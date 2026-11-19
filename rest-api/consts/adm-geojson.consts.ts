@@ -4,7 +4,7 @@ export const ADM_GEOJSON_RAW_FILE_URL_BY_CODE: Map<AdmLevelCode, string> =
   new Map([
     [
       AdmLevelCode.PROVINCE,
-      "https://github.com/AmazingTool777-911/madagascar-administrative-boundaries/raw/refs/heads/main/data/ndjson/provinces.ndjson",
+      "https://github.com/tech-AmazingTool/mada-adm-deno/raw/refs/heads/main/data/ndjson/provinces.ndjson",
     ],
     [
       AdmLevelCode.REGION,

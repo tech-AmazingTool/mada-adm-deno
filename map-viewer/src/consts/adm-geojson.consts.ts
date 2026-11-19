@@ -15,9 +15,9 @@ export const ADM_GEOJSON_DATA_SOURCE_BY_CODE: Map<
     AdmLevelCode.PROVINCE,
     {
       rawURL:
-        "https://github.com/AmazingTool777-911/madagascar-administrative-boundaries/raw/refs/heads/main/data/ndjson/provinces.ndjson",
+        "https://github.com/tech-AmazingTool/madagascar-administrative-boundaries/raw/refs/heads/main/data/ndjson/provinces.ndjson",
       previewURL:
-        "https://github.com/AmazingTool777-911/madagascar-administrative-boundaries/blob/main/data/ndjson/provinces.ndjson",
+        "https://github.com/tech-AmazingTool/madagascar-administrative-boundaries/blob/main/data/ndjson/provinces.ndjson",
       isNDJSON: true,
       fileSize: 2_243_308,
     },

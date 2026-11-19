@@ -20,7 +20,7 @@ export default function DataSourcesPage() {
           <p class="text-sm text-base-content/90">
             The map features displayed here are managed by the{" "}
             <a
-              href="https://github.com/AmazingTool777-911/madagascar-administrative-boundaries"
+              href="https://github.com/tech-AmazingTool/madagascar-administrative-boundaries"
               target="_blank"
               class="link link-primary"
             >
@@ -139,7 +139,7 @@ export default function DataSourcesPage() {
                     dataset, its layer consists of custom generated data by the
                     {" "}
                     <a
-                      href="https://github.com/AmazingTool777-911/madagascar-administrative-boundaries"
+                      href="https://github.com/tech-AmazingTool/madagascar-administrative-boundaries"
                       target="_blank"
                       class="link link-primary"
                     >

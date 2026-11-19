@@ -1,6 +1,6 @@
 import type { ComponentChildren } from "preact";
+import { lazy } from "preact-iso";
 import { AdmLevelCode } from "@scope/consts/models";
-import AppMap from "@/components/shell/AppMap.tsx";
 import ViewConfigModal from "@/components/shell/ViewConfigModal.tsx";
 import AppLogoLink from "@/components/shell/AppLogoLink.tsx";
 import SidebarAdmExplorerLink from "@/components/shell/SidebarAdmExplorerLink.tsx";
@@ -10,6 +10,8 @@ import RoutePageDrawer from "@/components/shell/RoutePageDrawer.tsx";
 import AppToasts from "@/components/shell/AppToasts.tsx";
 import SidebarWalkthroughBtn from "@/components/shell/SidebarWalkthroughBtn.tsx";
 import { WalkthroughDriverProvider } from "@/contexts/walkthrough-driver/index.ts";
+
+const AppMap = lazy(() => import("@/components/shell/AppMap.tsx"));
 
 const ADM_DATA_VERSION_BY_CODE = new Map<AdmLevelCode, number>([
   [
