@@ -247,7 +247,7 @@ export default function useAddPinnedLocationMarkerPopup(
           <div data-lock-marker-container class="flex items-center gap-x-3">
             <fieldset class="fieldset">
               <label class="label text-xs text-base-content/90">
-                Lock marker
+                Drag marker
                 <input
                   type="checkbox"
                   class="toggle toggle-xs toggle-primary"
@@ -776,7 +776,7 @@ export default function useAddPinnedLocationMarkerPopup(
         lockMarkerToggleElt.addEventListener("change", (e) => {
           e.preventDefault();
           const isChecked = (e.target as HTMLInputElement).checked;
-          onLockMarkerToggledRef.current?.(isChecked);
+          onLockMarkerToggledRef.current?.(!isChecked);
         });
 
         const draggableMarkerBadgeSectionElt = _markerPopup._content
@@ -1009,8 +1009,8 @@ export default function useAddPinnedLocationMarkerPopup(
         isCurrentLocation || !markerPopup.value || !pinnedLocationEntry.value
       ) return;
       if (lockMarkerToggleRef.current) {
-        lockMarkerToggleRef.current.checked =
-          pinnedLocationEntry.value.isLocked;
+        lockMarkerToggleRef.current.checked = !pinnedLocationEntry.value
+          .isLocked;
       }
       if (draggableMarkerBadgeSectionRef.current) {
         draggableMarkerBadgeSectionRef.current.innerHTML =

@@ -568,11 +568,11 @@ export default function PinsPagePinnedLocationCard(
             <div class="flex items-center gap-x-3 pt-1">
               <fieldset class="fieldset">
                 <label class="label text-xs text-base-content/90">
-                  Lock marker
+                  Drag marker
                   <input
                     type="checkbox"
                     class="toggle toggle-xs toggle-primary"
-                    checked={pinnedLocationEntry.isLocked}
+                    checked={!pinnedLocationEntry.isLocked}
                     onChange={handleLockToggle}
                   />
                 </label>
