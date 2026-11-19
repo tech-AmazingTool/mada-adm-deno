@@ -1,4 +1,3 @@
-import { ansi } from "@cliffy/ansi";
 import { colors } from "@cliffy/ansi/colors";
 
 import { ADM_LEVEL_TITLE_BY_CODE, AdmLevelCode } from "@scope/consts/models";
@@ -292,15 +291,7 @@ executor.run({
         break;
     }
   },
-  async teardown(context, { workerMetadata }, log) {
-    // console.log(
-    //   ansi.cursorUp(context.progressBarsLinesCount) + "\x1b[1L" +
-    //     ansi.cursorLeft +
-    //     colors.magenta(
-    //       `   [Processing worker #${workerMetadata.index}] Teardown`,
-    //     ) +
-    //     ansi.cursorDown(context.progressBarsLinesCount),
-    // );
+  async teardown(_, { workerMetadata }, log) {
     log(
       colors.magenta(
         `   [Processing worker #${workerMetadata.index}] Teardown`,

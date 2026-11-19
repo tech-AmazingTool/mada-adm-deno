@@ -1,0 +1,31 @@
+export const ADM_ENTITIES_COUNT = {
+  CASCADE_MODE:
+    import.meta.env.VITE_FRESH_PUBLIC_CASCADE_MODE_ADM_ENTITIES_COUNT
+      ? parseInt(
+        import.meta.env.VITE_FRESH_PUBLIC_CASCADE_MODE_ADM_ENTITIES_COUNT!,
+      )
+      : 10,
+  GLOBAL_MODE: import.meta.env.VITE_FRESH_PUBLIC_GLOBAL_MODE_ADM_ENTITIES_COUNT
+    ? parseInt(
+      import.meta.env.VITE_FRESH_PUBLIC_GLOBAL_MODE_ADM_ENTITIES_COUNT!,
+    )
+    : 10,
+};
+
+export const ADM_ENTITIES_SEARCH_MIN_LENGTH =
+  import.meta.env.VITE_FRESH_PUBLIC_SEARCH_MIN_LENGTH
+    ? Number(import.meta.env.VITE_FRESH_PUBLIC_SEARCH_MIN_LENGTH!)
+    : 3;
+
+export const ADM_ENTITIES_SEARCH_DEBOUNCE_DELAY =
+  import.meta.env.VITE_FRESH_PUBLIC_SEARCH_DEBOUNCE_DELAY
+    ? Number(import.meta.env.VITE_FRESH_PUBLIC_SEARCH_DEBOUNCE_DELAY!)
+    : 300;
+
+export const UNREFERENCED_ADM_GEOJSON_CLEANUP_INTERVAL =
+  import.meta.env.VITE_FRESH_PUBLIC_UNREFERENCED_ADM_GEOJSON_CLEANUP_INTERVAL
+    ? Number(
+      import.meta.env
+        .VITE_FRESH_PUBLIC_UNREFERENCED_ADM_GEOJSON_CLEANUP_INTERVAL!,
+    )
+    : 300;

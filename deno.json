@@ -17,10 +17,12 @@
     "map-viewer:dev": "cd ./map-viewer && deno task dev",
     "map-viewer:build": "cd ./map-viewer && deno task build",
     "map-viewer:start": "cd ./map-viewer && deno task start",
+    "rest-api:dev": "cd ./rest-api && deno task dev",
+    "rest-api:build": "cd ./rest-api && deno task build",
     "rest-api:start": "cd ./rest-api && deno task start",
     "extract-adm-inputs": "deno run --allow-env --allow-net --allow-read --allow-write --env scripts/extract-adm-inputs/extract-adm-inputs.script.ts",
     "generate-catalogs": "deno run -R -W ./scripts/generate-data-catalogs.script.ts",
-    "test": "deno test -R -E --env"
+    "test": "deno test -R -E -N --env --env-file"
   },
   "imports": {
     "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.1",
@@ -29,6 +31,7 @@
     "@cliffy/table": "jsr:@cliffy/table@^1.0.1",
     "@cliffy/testing": "jsr:@cliffy/testing@^1.0.1",
     "@db/postgres": "jsr:@db/postgres@^0.19.5",
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@^2.0.4",
     "@floating-ui/dom": "npm:@floating-ui/dom@^1.7.6",
     "@hono/hono": "jsr:@hono/hono@^4.12.24",
     "@iuioiua/redis": "jsr:@iuioiua/redis@^1.1.10",
