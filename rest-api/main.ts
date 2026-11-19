@@ -2,6 +2,9 @@ import { Hono } from "@hono/hono";
 import { cors } from "@hono/hono/cors";
 import { StatusCodes } from "http-status-codes";
 
+import type { AdmLevelCode } from "@scope/consts/models";
+
+import type { RestApiEnv } from "./rest-api.d.ts";
 import { connectDbMiddleware } from "./middlewares/connect-db.middleware.ts";
 import { loadConfigMiddleware } from "./middlewares/load-config.middleware.ts";
 import { getDbConnection } from "./connect-db.ts";
@@ -13,7 +16,7 @@ import { communesRouter } from "./routers/communes.router.ts";
 import { fokontanysRouter } from "./routers/fokontanys.router.ts";
 import { locationsRouter } from "./routers/locations.router.ts";
 import { errorHandlerMiddleware } from "./middlewares/error-handler.middleware.ts";
-import type { RestApiEnv } from "./rest-api.d.ts";
+import { ADM_GEOJSON_RAW_FILE_URL_BY_CODE } from "./consts/adm-geojson.consts.ts";
 
 await getDbConnection();
 
@@ -23,6 +26,29 @@ const app = new Hono<RestApiEnv>()
   .use(cors())
   .get("/", (c) => {
     return c.json({});
+  })
+  .get("/download/adm-geojson/:admLevel", async (c) => {
+    const admLevel = c.req.param("admLevel") as AdmLevelCode;
+    const sourceURL = ADM_GEOJSON_RAW_FILE_URL_BY_CODE.get(admLevel);
+    if (!sourceURL) {
+      return c.json(
+        {
+          error: `The ADM GeoJSON source data is not found for ${admLevel}`,
+        },
+        StatusCodes.NOT_FOUND,
+      );
+    }
+    const fetchFileResponse = await fetch(sourceURL);
+    return new Response(fetchFileResponse.body, {
+      headers: {
+        "Content-Type": fetchFileResponse.headers.get("content-type") ||
+          "application/octet-stream",
+        ...(fetchFileResponse.headers.get("content-length") && {
+          "Content-Length": fetchFileResponse.headers.get("content-length")!,
+        }),
+      },
+      status: 200,
+    });
   })
   .get("/api/config", (c) => {
     const config = c.get("madaAdmConfig");

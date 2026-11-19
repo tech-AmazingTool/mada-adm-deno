@@ -3,45 +3,38 @@
   "version": "0.0.1",
   "exports": "./main.ts",
   "tasks": {
-    "check": "deno fmt --check . && deno lint . && deno check",
+    "check": "deno fmt --check . && deno lint . && deno check src/",
     "dev": "vite",
     "build": "vite build",
-    "start": "deno serve -A _fresh/server.js",
-    "update": "deno run -A -r jsr:@fresh/update ."
+    "preview": "vite preview"
   },
   "lint": {
     "rules": {
-      "tags": [
-        "fresh",
-        "recommended"
-      ]
+      "tags": ["recommended"]
     }
   },
-  "exclude": [
-    "**/_fresh/*"
-  ],
+  "exclude": ["dist/"],
   "imports": {
-    "@/": "./",
+    "@/": "./src/",
     "@accelint/geo": "npm:@accelint/geo@^0.6.1",
     "@atlaskit/pragmatic-drag-and-drop": "npm:@atlaskit/pragmatic-drag-and-drop@^2.0.1",
+    "@preact/preset-vite": "npm:@preact/preset-vite@^2.10.6",
     "@turf/bbox": "npm:@turf/bbox@^7.3.5",
     "@types/leaflet": "npm:@types/leaflet@^1.9.21",
     "culori": "npm:culori@^4.0.2",
     "daisyui": "npm:daisyui@^5.5.19",
     "driver.js": "npm:driver.js@^1.8.0",
     "floating-ui": "npm:floating-ui@^5.2.8",
-    "fresh": "jsr:@fresh/core@^2.3.3",
     "geo-coordinates-parser": "npm:geo-coordinates-parser@^1.7.4",
     "lucide-preact": "npm:lucide-preact@^1.14.0",
     "maplibre-gl": "npm:maplibre-gl@^5.24.0",
     "preact": "npm:preact@^10.29.1",
     "@preact/signals": "npm:@preact/signals@^2.9.0",
-    "@fresh/plugin-vite": "jsr:@fresh/plugin-vite@^1.1.2",
+    "preact-iso": "npm:preact-iso@^2.12.2",
     "simplebar": "npm:simplebar@^6.3.3",
-    "vite": "npm:vite@^7.1.3",
-    "@types/babel__core": "npm:@types/babel__core@^7.20.5",
+    "vite": "npm:vite@^8.3.8",
     "tailwindcss": "npm:tailwindcss@^4.1.10",
-    "@tailwindcss/vite": "npm:@tailwindcss/vite@^4.1.12"
+    "@tailwindcss/vite": "npm:@tailwindcss/vite@^4.3.5"
   },
   "compilerOptions": {
     "lib": [
@@ -50,24 +43,8 @@
       "dom.iterable",
       "deno.ns"
     ],
-    "jsx": "precompile",
+    "jsx": "react-jsx",
     "jsxImportSource": "preact",
-    "jsxPrecompileSkipElements": [
-      "a",
-      "img",
-      "source",
-      "body",
-      "html",
-      "head",
-      "title",
-      "meta",
-      "script",
-      "link",
-      "style",
-      "base",
-      "noscript",
-      "template"
-    ],
     "types": [
       "vite/client"
     ],

@@ -31,6 +31,7 @@
     "@cliffy/table": "jsr:@cliffy/table@^1.0.1",
     "@cliffy/testing": "jsr:@cliffy/testing@^1.0.1",
     "@db/postgres": "jsr:@db/postgres@^0.19.5",
+    "@deno/vite-plugin": "npm:@deno/vite-plugin@^2.0.4",
     "@floating-ui/dom": "npm:@floating-ui/dom@^1.7.6",
     "@hono/hono": "jsr:@hono/hono@^4.12.24",
     "@iuioiua/redis": "jsr:@iuioiua/redis@^1.1.10",
