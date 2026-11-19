@@ -22,7 +22,7 @@
     "rest-api:start": "cd ./rest-api && deno task start",
     "extract-adm-inputs": "deno run --allow-env --allow-net --allow-read --allow-write --env scripts/extract-adm-inputs/extract-adm-inputs.script.ts",
     "generate-catalogs": "deno run -R -W ./scripts/generate-data-catalogs.script.ts",
-    "test": "deno test -R -E --env"
+    "test": "deno test -R -E -N --env --env-file"
   },
   "imports": {
     "@cliffy/ansi": "jsr:@cliffy/ansi@^1.0.1",
