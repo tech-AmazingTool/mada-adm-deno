@@ -8,7 +8,10 @@ import {
 } from "@/consts/pinned-locations.consts.ts";
 import { GEOLOCATION_TIMEOUT } from "@/config/pinned-locations.config.ts";
 import { FokontanyApi } from "@/api/fokontany.api.ts";
-import { compareGeographicCoordinates } from "@/helpers/pinned-locations.helper.ts";
+import {
+  compareGeographicCoordinates,
+  getNextUntitledLocationTitle,
+} from "@/helpers/pinned-locations.helper.ts";
 import { ApiStore } from "@/stores/api.store.ts";
 
 export type PinnedLocationEntry = {
@@ -26,7 +29,7 @@ export type PinnedLocationEntry = {
 };
 
 export type PinnedLocationPointOnMapPayload = {
-  title: string;
+  title?: string;
 };
 
 export type AddPinnedLocationEntryPayload = {
@@ -40,6 +43,8 @@ export class PinnedLocationsStore {
   constructor(private fokontanyApi: FokontanyApi, private apiStore: ApiStore) {}
 
   readonly showPanel = signal(false);
+  readonly showPointOnMapTitleModal = signal(false);
+  readonly pointOnMapTargetEntryId = signal<number | null>(null);
 
   readonly trackingProfileFrequency = signal<CurrentLocationTrackingProfile>(
     CurrentLocationTrackingProfile.Snapshot,
@@ -313,7 +318,25 @@ export class PinnedLocationsStore {
     }
   }
 
-  addPinnedLocationEntry(payload: AddPinnedLocationEntryPayload) {
+  getNextUntitledLocationTitle(): string {
+    return getNextUntitledLocationTitle(
+      this.pinnedLocations.value.map((l) => l.title),
+    );
+  }
+
+  openPointOnMapTitleModal(entryId: number) {
+    this.pointOnMapTargetEntryId.value = entryId;
+    this.showPointOnMapTitleModal.value = true;
+  }
+
+  closePointOnMapTitleModal() {
+    this.showPointOnMapTitleModal.value = false;
+    this.pointOnMapTargetEntryId.value = null;
+  }
+
+  addPinnedLocationEntry(
+    payload: AddPinnedLocationEntryPayload,
+  ): PinnedLocationEntry {
     const entry: PinnedLocationEntry = {
       id: Date.now(),
       title: payload.title,
@@ -328,6 +351,7 @@ export class PinnedLocationsStore {
       fokontany: null,
     };
     this.pinnedLocations.value = [entry, ...this.pinnedLocations.value];
+    return entry;
   }
 
   updatePinnedLocationEntryTitle(entryId: number, title: string) {

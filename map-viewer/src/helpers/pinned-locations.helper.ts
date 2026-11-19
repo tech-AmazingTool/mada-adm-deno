@@ -72,3 +72,8 @@ export function formatGeographicCoordinates(
       );
   }
 }
+
+export {
+  getNextUntitledLocationNumber,
+  getNextUntitledLocationTitle,
+} from "./untitled-location.helper.ts";

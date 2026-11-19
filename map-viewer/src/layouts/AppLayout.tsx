@@ -49,8 +49,6 @@ export type AppLayoutProps = {
 };
 
 export default function AppLayout({ children }: AppLayoutProps) {
-  const isActive = (_: string) => false;
-
   return (
     <WalkthroughDriverProvider>
       <div f-client-nav class="w-screen h-dvh max-h-dvh flex">
@@ -65,17 +63,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
               <nav>
                 <ul class="flex flex-col list-none p-0 m-0 gap-x-0">
                   <li>
-                    <SidebarAdmExplorerLink
-                      isActive={isActive("/adm-explorer")}
-                    />
+                    <SidebarAdmExplorerLink />
                   </li>
                   <li>
-                    <SidebarPinsLink isActive={isActive("/pins")} />
+                    <SidebarPinsLink />
                   </li>
                   <li>
-                    <SidebarDataSourcesLink
-                      isActive={isActive("/data-sources")}
-                    />
+                    <SidebarDataSourcesLink />
                   </li>
                 </ul>
               </nav>

@@ -54,11 +54,13 @@ export default function AppMapPinnedLocations(
     map.on("mouseout", handleMouseLeave);
 
     function handlePointClick(e: MapMouseEvent) {
-      pinnedLocationsStore.addPinnedLocationEntry({
-        title: pointOnMapPayload.value?.title ?? "",
+      const defaultTitle = pinnedLocationsStore.getNextUntitledLocationTitle();
+      const newEntry = pinnedLocationsStore.addPinnedLocationEntry({
+        title: defaultTitle,
         coordinates: { lng: e.lngLat.lng, lat: e.lngLat.lat },
       });
       pointOnMapPayload.value = null;
+      pinnedLocationsStore.openPointOnMapTitleModal(newEntry.id);
     }
     map.on("click", handlePointClick);
 

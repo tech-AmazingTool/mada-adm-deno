@@ -14,6 +14,7 @@ import {
 import { injectClientCacheIndexdDbConnection } from "@/client-cache/client-cache.indexeddb.ts";
 import { injectAdmGeojsonClientCache } from "@/client-cache/adm-geojson.client-cache.ts";
 import AppMapAdmGeoJsonDownloadModal from "@/components/shell/AppMapAdmGeoJsonDownloadModal.tsx";
+import AppMapPointOnMapTitleModal from "@/components/shell/AppMapPointOnMapTitleModal.tsx";
 import { AdmGeojsonMetadataClientCacheItem } from "@/types/cache.d.ts";
 import { LayerSwitcherControl } from "@/helpers/map-layer-switch-control.helper.ts";
 import { injectAdmEntityApi } from "@/api/adm-entity.api.ts";
@@ -352,6 +353,8 @@ export default function AppMap(props: AppMapProps) {
       </div>
       {/* Confirm ADM GeoJSON data download modal */}
       <AppMapAdmGeoJsonDownloadModal />
+      {/* Post-drop point on map title prompt modal */}
+      <AppMapPointOnMapTitleModal />
       {/* Dynamic ADM GeoJSON layers */}
       {appMapStore.map.value && (
         <>
