@@ -16,7 +16,7 @@
     "compile": "deno compile --self-extracting --output ./bin/current-platform/mada-adm --include commands/workers --include data/inputs --exclude commands/.args --exclude db/.pki --exclude db/.sqlite --exclude redis/.pki -E -N -R -W --allow-ffi -S commands/index.ts",
     "map-viewer:dev": "cd ./map-viewer && deno task dev",
     "map-viewer:build": "cd ./map-viewer && deno task build",
-    "map-viewer:start": "cd ./map-viewer && deno task start",
+    "map-viewer:preview": "cd ./map-viewer && deno task preview",
     "rest-api:dev": "cd ./rest-api && deno task dev",
     "rest-api:build": "cd ./rest-api && deno task build",
     "rest-api:start": "cd ./rest-api && deno task start",
